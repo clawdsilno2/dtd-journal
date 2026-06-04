@@ -6,15 +6,14 @@ import { DEFAULT_SETTINGS } from './types';
 
 let backupTimer: ReturnType<typeof setTimeout> | null = null;
 
-function triggerBackup(userKey: string) {
+function triggerBackup(instanceId: string) {
   if (backupTimer) clearTimeout(backupTimer);
   backupTimer = setTimeout(() => {
     try {
-      const prefix = `dtd-${userKey}-`;
+      const prefix = `dtd-${instanceId}-`;
       const profiles = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
       const activeProfile = localStorage.getItem(`${prefix}active-profile`);
-      const label = localStorage.getItem('dtd-active-label') || userKey;
-      const backup: Record<string, unknown> = { userKey, username: label, profiles, activeProfile, backedUpAt: new Date().toISOString() };
+      const backup: Record<string, unknown> = { instanceId, profiles, activeProfile, backedUpAt: new Date().toISOString() };
       for (const p of profiles) {
         backup[`trades-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}trades-${p.id}`) || '[]');
         backup[`settings-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}settings-${p.id}`) || 'null');
@@ -24,8 +23,8 @@ function triggerBackup(userKey: string) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(backup),
-      }).catch(() => { /* silent fail */ });
-    } catch { /* silent fail */ }
+      }).catch(() => {});
+    } catch {}
   }, 5000);
 }
 
@@ -42,7 +41,7 @@ function saveJSON(key: string, value: unknown) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-// --- Profiles (namespaced by userKey) ---
+// --- Profiles ---
 
 export interface Profile {
   id: string;
@@ -51,8 +50,8 @@ export interface Profile {
 
 const DEFAULT_PROFILE: Profile = { id: 'default', name: 'My Journal' };
 
-export function useProfiles(userKey: string) {
-  const prefix = `dtd-${userKey}-`;
+export function useProfiles(instanceId: string) {
+  const prefix = `dtd-${instanceId}-`;
 
   const [profiles, setProfiles] = useState<Profile[]>(() =>
     loadJSON(`${prefix}profiles`, [DEFAULT_PROFILE])
@@ -63,8 +62,6 @@ export function useProfiles(userKey: string) {
 
   useEffect(() => { saveJSON(`${prefix}profiles`, profiles); }, [prefix, profiles]);
   useEffect(() => { saveJSON(`${prefix}active-profile`, activeId); }, [prefix, activeId]);
-
-  // Reload when userKey changes
   useEffect(() => {
     setProfiles(loadJSON(`${prefix}profiles`, [DEFAULT_PROFILE]));
     setActiveId(loadJSON(`${prefix}active-profile`, 'default'));
@@ -97,7 +94,7 @@ export function useProfiles(userKey: string) {
   return { profiles, activeProfile, activeId, setActiveId, createProfile, deleteProfile, renameProfile };
 }
 
-// --- Trade migration (handles old data formats) ---
+// --- Trade migration ---
 
 function migrateTrade(raw: Partial<Trade>): Trade {
   const legacy = raw as Record<string, unknown>;
@@ -145,39 +142,31 @@ function migrateTrade(raw: Partial<Trade>): Trade {
   };
 }
 
-// --- Profile-scoped trades & settings (namespaced by userKey) ---
+// --- Trades & Settings (scoped by instanceId + profileId) ---
 
-function loadTrades(userKey: string, profileId: string): Trade[] {
-  const key = `dtd-${userKey}-trades-${profileId}`;
+function loadTrades(instanceId: string, profileId: string): Trade[] {
+  const key = `dtd-${instanceId}-trades-${profileId}`;
   const stored = loadJSON<Partial<Trade>[]>(key, []);
   if (stored.length > 0) return stored.map(migrateTrade);
   return [];
 }
 
-export function useTrades(userKey: string, profileId: string) {
-  const key = `dtd-${userKey}-trades-${profileId}`;
-  const [trades, setTrades] = useState<Trade[]>(() => loadTrades(userKey, profileId));
+export function useTrades(instanceId: string, profileId: string) {
+  const key = `dtd-${instanceId}-trades-${profileId}`;
+  const [trades, setTrades] = useState<Trade[]>(() => loadTrades(instanceId, profileId));
 
-  useEffect(() => { setTrades(loadTrades(userKey, profileId)); }, [userKey, profileId]);
+  useEffect(() => { setTrades(loadTrades(instanceId, profileId)); }, [instanceId, profileId]);
 
-  const isFirstRender = useRef(true);
+  const isFirst = useRef(true);
   useEffect(() => {
     saveJSON(key, trades);
-    if (isFirstRender.current) { isFirstRender.current = false; return; }
-    triggerBackup(userKey);
-  }, [key, trades, userKey]);
+    if (isFirst.current) { isFirst.current = false; return; }
+    triggerBackup(instanceId);
+  }, [key, trades, instanceId]);
 
-  const addTrade = useCallback((trade: Trade) => {
-    setTrades(prev => [...prev, trade]);
-  }, []);
-
-  const updateTrade = useCallback((id: string, updates: Partial<Trade>) => {
-    setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-  }, []);
-
-  const deleteTrade = useCallback((id: string) => {
-    setTrades(prev => prev.filter(t => t.id !== id));
-  }, []);
+  const addTrade = useCallback((trade: Trade) => { setTrades(prev => [...prev, trade]); }, []);
+  const updateTrade = useCallback((id: string, updates: Partial<Trade>) => { setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)); }, []);
+  const deleteTrade = useCallback((id: string) => { setTrades(prev => prev.filter(t => t.id !== id)); }, []);
 
   return { trades, setTrades, addTrade, updateTrade, deleteTrade };
 }
@@ -187,25 +176,25 @@ function mergeSettings(stored: Partial<Settings> | null, defaults: Settings): Se
   return { ...defaults, ...stored };
 }
 
-function loadSettings(userKey: string, profileId: string): Settings {
-  const key = `dtd-${userKey}-settings-${profileId}`;
+function loadSettings(instanceId: string, profileId: string): Settings {
+  const key = `dtd-${instanceId}-settings-${profileId}`;
   const stored = loadJSON<Partial<Settings> | null>(key, null);
-  if (stored?.accountName) return mergeSettings(stored, DEFAULT_SETTINGS);
+  if (stored) return mergeSettings(stored, DEFAULT_SETTINGS);
   return DEFAULT_SETTINGS;
 }
 
-export function useSettings(userKey: string, profileId: string) {
-  const key = `dtd-${userKey}-settings-${profileId}`;
-  const [settings, setSettings] = useState<Settings>(() => loadSettings(userKey, profileId));
+export function useSettings(instanceId: string, profileId: string) {
+  const key = `dtd-${instanceId}-settings-${profileId}`;
+  const [settings, setSettings] = useState<Settings>(() => loadSettings(instanceId, profileId));
 
-  useEffect(() => { setSettings(loadSettings(userKey, profileId)); }, [userKey, profileId]);
+  useEffect(() => { setSettings(loadSettings(instanceId, profileId)); }, [instanceId, profileId]);
 
-  const isFirstSettingsRender = useRef(true);
+  const isFirst = useRef(true);
   useEffect(() => {
     saveJSON(key, settings);
-    if (isFirstSettingsRender.current) { isFirstSettingsRender.current = false; return; }
-    triggerBackup(userKey);
-  }, [key, settings, userKey]);
+    if (isFirst.current) { isFirst.current = false; return; }
+    triggerBackup(instanceId);
+  }, [key, settings, instanceId]);
 
   return { settings, setSettings };
 }

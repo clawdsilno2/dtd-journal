@@ -7,21 +7,24 @@ import TradeForm from '../components/TradeForm';
 interface Props {
   trades: Trade[];
   settings: Settings;
-  addTrade: (t: Trade) => void;
-  updateTrade: (id: string, updates: Partial<Trade>) => void;
-  deleteTrade: (id: string) => void;
+  addTrade?: (t: Trade) => void;
+  updateTrade?: (id: string, updates: Partial<Trade>) => void;
+  deleteTrade?: (id: string) => void;
+  viewOnly?: boolean;
 }
 
-export default function Trades({ trades, settings, addTrade, updateTrade, deleteTrade }: Props) {
+export default function Trades({ trades, settings, addTrade, updateTrade, deleteTrade, viewOnly }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
 
   const handleAdd = () => {
+    if (!addTrade) return;
     const t = createEmptyTrade(trades.length + 1);
     addTrade(t);
     setEditing(t.id);
   };
 
   const handleDelete = (id: string) => {
+    if (!deleteTrade) return;
     deleteTrade(id);
     setEditing(null);
   };
@@ -32,12 +35,14 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Trade Log</h2>
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
-        >
-          <Plus size={16} /> New Trade
-        </button>
+        {!viewOnly && (
+          <button
+            onClick={handleAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
+          >
+            <Plus size={16} /> New Trade
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border">
@@ -63,8 +68,8 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
                 return (
                   <tr
                     key={t.id}
-                    onClick={() => setEditing(t.id)}
-                    className="border-t border-border hover:bg-bg-tertiary/50 cursor-pointer transition-colors"
+                    onClick={() => { if (!viewOnly) setEditing(t.id); }}
+                    className={`border-t border-border transition-colors ${viewOnly ? '' : 'hover:bg-bg-tertiary/50 cursor-pointer'}`}
                   >
                     <td className="px-3 py-2 text-text-secondary">{t.tradeNumber}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{t.date}</td>
@@ -100,7 +105,7 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
         </table>
       </div>
 
-      {editingTrade && (
+      {editingTrade && !viewOnly && updateTrade && (
         <TradeForm
           trade={editingTrade}
           settings={settings}

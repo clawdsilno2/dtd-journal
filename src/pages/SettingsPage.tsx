@@ -3,7 +3,8 @@ import { Trash2, Plus } from 'lucide-react';
 
 interface Props {
   settings: Settings;
-  setSettings: (s: Settings) => void;
+  setSettings?: (s: Settings) => void;
+  viewOnly?: boolean;
 }
 
 function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
@@ -15,8 +16,8 @@ function SectionBlock({ title, children }: { title: string; children: React.Reac
   );
 }
 
-export default function SettingsPage({ settings, setSettings }: Props) {
-  const update = (partial: Partial<Settings>) => setSettings({ ...settings, ...partial });
+export default function SettingsPage({ settings, setSettings, viewOnly }: Props) {
+  const update = (partial: Partial<Settings>) => { if (setSettings) setSettings({ ...settings, ...partial }); };
 
   const updateSession = (index: number, field: keyof SessionTime, value: string) => {
     const sessions = [...settings.sessions];
@@ -74,8 +75,10 @@ export default function SettingsPage({ settings, setSettings }: Props) {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl">
-      <h2 className="text-xl font-bold">Settings (List Variables)</h2>
+    <div className={`p-6 space-y-6 max-w-3xl ${viewOnly ? 'pointer-events-none opacity-75' : ''}`}>
+      <h2 className="text-xl font-bold">Settings (List Variables)
+        {viewOnly && <span className="text-xs text-yellow font-normal ml-2">(View only)</span>}
+      </h2>
 
       <SectionBlock title="Strategy Editables">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -157,7 +160,7 @@ export default function SettingsPage({ settings, setSettings }: Props) {
                 reader.onload = () => {
                   try {
                     const data = JSON.parse(reader.result as string);
-                    if (data.settings) setSettings(data.settings);
+                    if (data.settings && setSettings) setSettings(data.settings);
                     window.location.reload();
                   } catch {
                     alert('Invalid backup file');

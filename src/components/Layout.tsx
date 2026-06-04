@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Table, Settings as SettingsIcon, Calendar, BookOpen, LogOut, ChevronDown, Plus, Trash2, Check, X } from 'lucide-react';
+import { LayoutDashboard, Table, Settings as SettingsIcon, Calendar, BookOpen, LogOut, ChevronDown, Plus, Trash2, Check, X, Eye } from 'lucide-react';
 import type { Profile } from '../store';
 
 interface Props {
@@ -10,7 +10,9 @@ interface Props {
   onCreateProfile: (name: string) => void;
   onDeleteProfile: (id: string) => void;
   onRenameProfile: (id: string, name: string) => void;
-  onLogout: () => void;
+  onExit: () => void;
+  instanceName: string;
+  viewOnly: boolean;
 }
 
 const navItems = [
@@ -21,7 +23,7 @@ const navItems = [
   { to: '/guide', icon: BookOpen, label: 'Guide' },
 ];
 
-export default function Layout({ profiles, activeProfile, onSwitchProfile, onCreateProfile, onDeleteProfile, onRenameProfile, onLogout }: Props) {
+export default function Layout({ profiles, activeProfile, onSwitchProfile, onCreateProfile, onDeleteProfile, onRenameProfile, onExit, instanceName, viewOnly }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -47,17 +49,26 @@ export default function Layout({ profiles, activeProfile, onSwitchProfile, onCre
   return (
     <div className="flex h-screen">
       <nav className="w-56 bg-bg-secondary border-r border-border flex flex-col shrink-0">
+        {/* Instance name + view badge */}
+        <div className="px-5 pt-4 pb-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold text-text-primary truncate">{instanceName}</h1>
+            {viewOnly && (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] bg-yellow/15 text-yellow rounded font-medium shrink-0">
+                <Eye size={10} /> View
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Profile Selector */}
-        <div className="p-4 border-b border-border relative">
+        <div className="px-4 pb-3 border-b border-border relative">
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className="w-full flex items-center justify-between px-3 py-2 bg-bg-tertiary rounded-lg hover:border-accent/50 border border-border transition-colors"
           >
-            <div className="text-left min-w-0">
-              <p className="text-sm font-semibold text-text-primary truncate">{activeProfile.name}</p>
-              <p className="text-[10px] text-text-secondary">DTD Journal</p>
-            </div>
-            <ChevronDown size={14} className={`text-text-secondary shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+            <p className="text-xs text-text-primary truncate">{activeProfile.name}</p>
+            <ChevronDown size={12} className={`text-text-secondary shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {dropdownOpen && (
@@ -87,12 +98,11 @@ export default function Layout({ profiles, activeProfile, onSwitchProfile, onCre
                         {p.name}
                       </button>
                     )}
-                    {editingId !== p.id && (
+                    {!viewOnly && editingId !== p.id && (
                       <div className="hidden group-hover:flex items-center pr-2 gap-0.5">
                         <button
                           onClick={e => { e.stopPropagation(); setEditingId(p.id); setEditName(p.name); }}
                           className="p-1 text-text-secondary hover:text-text-primary text-[10px]"
-                          title="Rename"
                         >
                           ab
                         </button>
@@ -100,7 +110,6 @@ export default function Layout({ profiles, activeProfile, onSwitchProfile, onCre
                           <button
                             onClick={e => { e.stopPropagation(); onDeleteProfile(p.id); }}
                             className="p-1 text-text-secondary hover:text-red"
-                            title="Delete"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -110,29 +119,31 @@ export default function Layout({ profiles, activeProfile, onSwitchProfile, onCre
                   </div>
                 ))}
               </div>
-              <div className="border-t border-border">
-                {creating ? (
-                  <div className="flex items-center gap-1 p-2">
-                    <input
-                      autoFocus
-                      value={newName}
-                      onChange={e => setNewName(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false); }}
-                      placeholder="Profile name..."
-                      className="flex-1 text-sm !py-1 !px-2"
-                    />
-                    <button onClick={handleCreate} className="p-1 text-green hover:text-green"><Check size={14} /></button>
-                    <button onClick={() => setCreating(false)} className="p-1 text-text-secondary hover:text-text-primary"><X size={14} /></button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setCreating(true)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-bg-secondary transition-colors"
-                  >
-                    <Plus size={14} /> New Profile
-                  </button>
-                )}
-              </div>
+              {!viewOnly && (
+                <div className="border-t border-border">
+                  {creating ? (
+                    <div className="flex items-center gap-1 p-2">
+                      <input
+                        autoFocus
+                        value={newName}
+                        onChange={e => setNewName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') setCreating(false); }}
+                        placeholder="Profile name..."
+                        className="flex-1 text-sm !py-1 !px-2"
+                      />
+                      <button onClick={handleCreate} className="p-1 text-green"><Check size={14} /></button>
+                      <button onClick={() => setCreating(false)} className="p-1 text-text-secondary"><X size={14} /></button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setCreating(true)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-bg-secondary transition-colors"
+                    >
+                      <Plus size={14} /> New Profile
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -155,12 +166,13 @@ export default function Layout({ profiles, activeProfile, onSwitchProfile, onCre
             </NavLink>
           ))}
         </div>
+
         <div className="p-3 border-t border-border">
           <button
-            onClick={onLogout}
-            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-text-secondary hover:text-red rounded-lg hover:bg-bg-tertiary transition-colors"
+            onClick={onExit}
+            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-text-secondary hover:text-text-primary rounded-lg hover:bg-bg-tertiary transition-colors"
           >
-            <LogOut size={14} /> Log out
+            <LogOut size={14} /> All Journals
           </button>
         </div>
       </nav>
