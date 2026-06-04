@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import type { Trade, Settings } from '../types';
 import { getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession } from '../types';
 
@@ -10,20 +10,24 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-function InfoButton({ text }: { text: string }) {
-  const [open, setOpen] = useState(false);
+// Shared state so only one tooltip is open at a time
+const TooltipCtx = createContext<{ openId: string | null; setOpenId: (id: string | null) => void }>({ openId: null, setOpenId: () => {} });
+
+function InfoButton({ text, id }: { text: string; id: string }) {
+  const { openId, setOpenId } = useContext(TooltipCtx);
+  const isOpen = openId === id;
   return (
     <span className="relative inline-block ml-1">
       <button
         type="button"
-        onClick={e => { e.stopPropagation(); setOpen(!open); }}
+        onClick={e => { e.stopPropagation(); setOpenId(isOpen ? null : id); }}
         className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-bg-tertiary text-[9px] text-text-secondary hover:text-accent hover:bg-accent/15 transition-colors leading-none"
       >
         i
       </button>
-      {open && (
+      {isOpen && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-40" onClick={() => setOpenId(null)} />
           <div className="absolute left-0 bottom-full mb-1 z-50 w-56 p-2.5 rounded-lg bg-bg-tertiary border border-border shadow-xl text-xs text-text-secondary leading-relaxed">
             {text}
           </div>
@@ -38,7 +42,7 @@ function Field({ label, children, computed, info }: { label: string; children?: 
     <div className="flex flex-col gap-1">
       <label className="text-xs text-text-secondary font-medium">
         {label}
-        {info && <InfoButton text={info} />}
+        {info && <InfoButton text={info} id={label} />}
       </label>
       {computed !== undefined ? (
         <div className="px-2.5 py-1.5 bg-bg-primary rounded-md text-sm text-accent-hover font-mono">
@@ -63,8 +67,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function TradeForm({ trade, settings, onChange, onClose, onDelete }: Props) {
   const t = trade;
   const set = (updates: Partial<Trade>) => onChange(t.id, updates);
+  const [openTooltip, setOpenTooltip] = useState<string | null>(null);
 
   return (
+    <TooltipCtx.Provider value={{ openId: openTooltip, setOpenId: setOpenTooltip }}>
     <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-8 z-50 overflow-auto pb-8">
       <div className="bg-bg-secondary rounded-xl border border-border w-full max-w-4xl p-6 space-y-6">
         <div className="flex items-center justify-between">
@@ -338,5 +344,6 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
         </div>
       </div>
     </div>
+    </TooltipCtx.Provider>
   );
 }
