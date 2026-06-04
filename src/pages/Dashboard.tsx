@@ -242,21 +242,31 @@ export default function Dashboard({ trades, settings }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 bg-bg-secondary rounded-lg border border-border p-4">
             <h3 className="text-sm font-semibold mb-4">Account Performance</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={equityCurve.slice(1)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2e3347" />
-                <XAxis dataKey="date" tick={{ fill: '#8b90a5', fontSize: 10 }} />
-                <YAxis tick={{ fill: '#8b90a5', fontSize: 10 }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip
-                  contentStyle={{ background: '#1a1d27', border: '1px solid #2e3347', borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: '#e1e4ed' }}
-                  formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, '']}
-                />
-                <Legend />
-                <Line type="monotone" dataKey="equity" stroke="#6366f1" strokeWidth={2} dot={false} name="Equity" />
-                <Line type="monotone" dataKey="balance" stroke="#8b90a5" strokeWidth={1} strokeDasharray="4 4" dot={false} name="Balance" />
-              </LineChart>
-            </ResponsiveContainer>
+            {(() => {
+              const data = equityCurve.slice(1);
+              const returns = data.map(p => p.returnPct);
+              const minR = Math.min(...returns, 0);
+              const maxR = Math.max(...returns, 0);
+              const margin = 3;
+              const yMin = Math.floor(minR - margin);
+              const yMax = Math.ceil(maxR + margin);
+              return (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2e3347" />
+                    <XAxis dataKey="date" tick={{ fill: '#8b90a5', fontSize: 10 }} />
+                    <YAxis domain={[yMin, yMax]} tick={{ fill: '#8b90a5', fontSize: 10 }} tickFormatter={v => `${v}%`} />
+                    <Tooltip
+                      contentStyle={{ background: '#1a1d27', border: '1px solid #2e3347', borderRadius: 8, fontSize: 12 }}
+                      labelStyle={{ color: '#e1e4ed' }}
+                      formatter={(v: unknown) => [`${Number(v).toFixed(2)}%`, '']}
+                    />
+                    <Legend />
+                    <Line type="monotone" dataKey="returnPct" stroke="#6366f1" strokeWidth={2} dot={false} name="Return %" />
+                  </LineChart>
+                </ResponsiveContainer>
+              );
+            })()}
           </div>
           <div className="bg-bg-secondary rounded-lg border border-border p-4">
             <h3 className="text-sm font-semibold mb-1">Overall Return</h3>

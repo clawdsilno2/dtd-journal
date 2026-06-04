@@ -43,19 +43,27 @@ export default function ReturnPage({ trades, settings }: Props) {
       <div className="bg-bg-secondary rounded-lg border border-border p-4">
         <h3 className="text-sm font-semibold mb-1">Cumulative Equity Returns</h3>
         <p className="text-xs text-text-secondary mb-4">Growth of the portfolio over time, accounting for all gains and losses.</p>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={cumulativeData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2e3347" />
-            <XAxis dataKey="date" tick={{ fill: '#8b90a5', fontSize: 10 }} />
-            <YAxis tick={{ fill: '#8b90a5', fontSize: 10 }} tickFormatter={v => `${v}%`} />
-            <Tooltip
-              contentStyle={{ background: '#1a1d27', border: '1px solid #2e3347', borderRadius: 8, fontSize: 12 }}
-              labelStyle={{ color: '#e1e4ed' }}
-              formatter={(v: unknown) => [`${Number(v).toFixed(2)}%`, 'Return']}
-            />
-            <Line type="monotone" dataKey="return" stroke="#6366f1" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
+        {(() => {
+          const vals = cumulativeData.map(d => d.return);
+          const minV = Math.min(...vals, 0);
+          const maxV = Math.max(...vals, 0);
+          const margin = 3;
+          return (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={cumulativeData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2e3347" />
+                <XAxis dataKey="date" tick={{ fill: '#8b90a5', fontSize: 10 }} />
+                <YAxis domain={[Math.floor(minV - margin), Math.ceil(maxV + margin)]} tick={{ fill: '#8b90a5', fontSize: 10 }} tickFormatter={v => `${v}%`} />
+                <Tooltip
+                  contentStyle={{ background: '#1a1d27', border: '1px solid #2e3347', borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: '#e1e4ed' }}
+                  formatter={(v: unknown) => [`${Number(v).toFixed(2)}%`, 'Return']}
+                />
+                <Line type="monotone" dataKey="return" stroke="#6366f1" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          );
+        })()}
       </div>
 
       {/* Rolling Returns */}
@@ -84,21 +92,29 @@ export default function ReturnPage({ trades, settings }: Props) {
       <div className="bg-bg-secondary rounded-lg border border-border p-4">
         <h3 className="text-sm font-semibold mb-1">Return vs Benchmark (S&P 500)</h3>
         <p className="text-xs text-text-secondary mb-4">Compares cumulative returns against the S&P 500 (~10.5% annualized), showing relative performance over time.</p>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={benchmarkData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2e3347" />
-            <XAxis dataKey="date" tick={{ fill: '#8b90a5', fontSize: 10 }} />
-            <YAxis tick={{ fill: '#8b90a5', fontSize: 10 }} tickFormatter={v => `${v}%`} />
-            <Tooltip
-              contentStyle={{ background: '#1a1d27', border: '1px solid #2e3347', borderRadius: 8, fontSize: 12 }}
-              labelStyle={{ color: '#e1e4ed' }}
-              formatter={(v: unknown, name: unknown) => [`${Number(v).toFixed(2)}%`, String(name)]}
-            />
-            <Legend />
-            <Line type="monotone" dataKey="strategy" stroke="#6366f1" strokeWidth={2} dot={false} name="Strategy" />
-            <Line type="monotone" dataKey="sp500" stroke="#8b90a5" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="S&P 500" />
-          </LineChart>
-        </ResponsiveContainer>
+        {(() => {
+          const allVals = benchmarkData.flatMap(d => [d.strategy, d.sp500]);
+          const minV = Math.min(...allVals, 0);
+          const maxV = Math.max(...allVals, 0);
+          const margin = 3;
+          return (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={benchmarkData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2e3347" />
+                <XAxis dataKey="date" tick={{ fill: '#8b90a5', fontSize: 10 }} />
+                <YAxis domain={[Math.floor(minV - margin), Math.ceil(maxV + margin)]} tick={{ fill: '#8b90a5', fontSize: 10 }} tickFormatter={v => `${v}%`} />
+                <Tooltip
+                  contentStyle={{ background: '#1a1d27', border: '1px solid #2e3347', borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: '#e1e4ed' }}
+                  formatter={(v: unknown, name: unknown) => [`${Number(v).toFixed(2)}%`, String(name)]}
+                />
+                <Legend />
+                <Line type="monotone" dataKey="strategy" stroke="#6366f1" strokeWidth={2} dot={false} name="Strategy" />
+                <Line type="monotone" dataKey="sp500" stroke="#8b90a5" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="S&P 500" />
+              </LineChart>
+            </ResponsiveContainer>
+          );
+        })()}
       </div>
     </div>
   );
