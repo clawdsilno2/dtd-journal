@@ -181,18 +181,24 @@ function migrateTrade(raw: Partial<Trade>): Trade {
   };
 }
 
+function loadTrades(profileId: string): Trade[] {
+  const key = `dtd-trades-${profileId}`;
+  const stored = loadJSON<Partial<Trade>[]>(key, []);
+  if (stored.length > 0) return stored.map(migrateTrade);
+  if (profileId === 'default') {
+    const legacy = loadJSON<Partial<Trade>[]>('dtd-trades', []);
+    if (legacy.length > 0) return legacy.map(migrateTrade);
+    return SAMPLE_TRADES;
+  }
+  return [];
+}
+
 export function useTrades(profileId: string) {
   const key = `dtd-trades-${profileId}`;
-  const [trades, setTrades] = useState<Trade[]>(() => {
-    const stored = loadJSON<Partial<Trade>[]>(key, []);
-    if (stored.length > 0) return stored.map(migrateTrade);
-    if (profileId === 'default') {
-      const legacy = loadJSON<Partial<Trade>[]>('dtd-trades', []);
-      if (legacy.length > 0) return legacy.map(migrateTrade);
-      return SAMPLE_TRADES;
-    }
-    return [];
-  });
+  const [trades, setTrades] = useState<Trade[]>(() => loadTrades(profileId));
+
+  // Reload when profile changes
+  useEffect(() => { setTrades(loadTrades(profileId)); }, [profileId]);
 
   useEffect(() => { saveJSON(key, trades); }, [key, trades]);
 
@@ -217,18 +223,24 @@ function mergeSettings(stored: Partial<Settings> | null, defaults: Settings): Se
   return { ...defaults, ...stored };
 }
 
+function loadSettings(profileId: string): Settings {
+  const key = `dtd-settings-${profileId}`;
+  const stored = loadJSON<Partial<Settings> | null>(key, null);
+  if (stored?.accountName) return mergeSettings(stored, DEFAULT_SETTINGS);
+  if (profileId === 'default') {
+    const legacy = loadJSON<Partial<Settings> | null>('dtd-settings', null);
+    if (legacy?.accountName) return mergeSettings(legacy, SAMPLE_SETTINGS);
+    return SAMPLE_SETTINGS;
+  }
+  return DEFAULT_SETTINGS;
+}
+
 export function useSettings(profileId: string) {
   const key = `dtd-settings-${profileId}`;
-  const [settings, setSettings] = useState<Settings>(() => {
-    const stored = loadJSON<Partial<Settings> | null>(key, null);
-    if (stored?.accountName) return mergeSettings(stored, DEFAULT_SETTINGS);
-    if (profileId === 'default') {
-      const legacy = loadJSON<Partial<Settings> | null>('dtd-settings', null);
-      if (legacy?.accountName) return mergeSettings(legacy, SAMPLE_SETTINGS);
-      return SAMPLE_SETTINGS;
-    }
-    return DEFAULT_SETTINGS;
-  });
+  const [settings, setSettings] = useState<Settings>(() => loadSettings(profileId));
+
+  // Reload when profile changes
+  useEffect(() => { setSettings(loadSettings(profileId)); }, [profileId]);
 
   useEffect(() => { saveJSON(key, settings); }, [key, settings]);
 
