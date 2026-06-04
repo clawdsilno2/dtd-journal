@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Trades from './pages/Trades';
 import Dashboard from './pages/Dashboard';
+import ReturnPage from './pages/ReturnPage';
+import RiskPage from './pages/RiskPage';
 import CalendarView from './pages/CalendarView';
 import SettingsPage from './pages/SettingsPage';
 import Guide from './pages/Guide';
@@ -233,7 +235,10 @@ function JournalApp({ instanceId, instanceName, mode, onExit }: {
             viewOnly={isView}
           />
         }>
-          <Route path="/" element={
+          <Route path="/" element={<Dashboard trades={trades} settings={settings} />} />
+          <Route path="/return" element={<ReturnPage trades={trades} settings={settings} />} />
+          <Route path="/risk" element={<RiskPage trades={trades} settings={settings} />} />
+          <Route path="/trades" element={
             <Trades
               trades={trades}
               settings={settings}
@@ -243,7 +248,6 @@ function JournalApp({ instanceId, instanceName, mode, onExit }: {
               viewOnly={isView}
             />
           } />
-          <Route path="/dashboard" element={<Dashboard trades={trades} settings={settings} />} />
           <Route path="/calendar" element={<CalendarView trades={trades} />} />
           <Route path="/settings" element={<SettingsPage settings={settings} setSettings={isView ? undefined : setSettings} viewOnly={isView} />} />
           <Route path="/guide" element={<Guide />} />

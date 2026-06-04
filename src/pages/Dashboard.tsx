@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import type { Trade, Settings } from '../types';
 import { getNetResult, getNetRR, getSession } from '../types';
+import { buildEquityCurve, computeOverallStats } from '../analytics';
 
 interface Props {
   trades: Trade[];
@@ -221,6 +222,9 @@ export default function Dashboard({ trades, settings }: Props) {
     return computeBreakdown(trades, t => t.entryType);
   }, [trades]);
 
+  const equityCurve = useMemo(() => buildEquityCurve(trades, settings.startingBalance), [trades, settings]);
+  const overallStats = useMemo(() => computeOverallStats(trades, settings, equityCurve), [trades, settings, equityCurve]);
+
   if (!stats) {
     return (
       <div className="p-6 text-center text-text-secondary mt-20">
@@ -231,7 +235,54 @@ export default function Dashboard({ trades, settings }: Props) {
 
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-xl font-bold">Dashboard</h2>
+      <h2 className="text-xl font-bold">Overview</h2>
+
+      {/* Equity Curve + Overall Return */}
+      {overallStats && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-bg-secondary rounded-lg border border-border p-4">
+            <h3 className="text-sm font-semibold mb-4">Account Performance</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={equityCurve.slice(1)}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2e3347" />
+                <XAxis dataKey="date" tick={{ fill: '#8b90a5', fontSize: 10 }} />
+                <YAxis tick={{ fill: '#8b90a5', fontSize: 10 }} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  contentStyle={{ background: '#1a1d27', border: '1px solid #2e3347', borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: '#e1e4ed' }}
+                  formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, '']}
+                />
+                <Legend />
+                <Line type="monotone" dataKey="equity" stroke="#6366f1" strokeWidth={2} dot={false} name="Equity" />
+                <Line type="monotone" dataKey="balance" stroke="#8b90a5" strokeWidth={1} strokeDasharray="4 4" dot={false} name="Balance" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="bg-bg-secondary rounded-lg border border-border p-4">
+            <h3 className="text-sm font-semibold mb-1">Overall Return</h3>
+            <p className={`text-2xl font-bold font-mono mb-4 ${overallStats.totalReturn >= 0 ? 'text-green' : 'text-red'}`}>
+              {overallStats.totalReturn >= 0 ? '+' : ''}{overallStats.totalReturn.toFixed(2)}%
+            </p>
+            <div className="space-y-2.5 text-xs">
+              {[
+                ['YTD Return', `${overallStats.ytdReturn >= 0 ? '+' : ''}${overallStats.ytdReturn.toFixed(2)}%`, overallStats.ytdReturn >= 0 ? 'text-green' : 'text-red'],
+                ['Max Drawdown', `${overallStats.maxDDPct.toFixed(2)}%`, 'text-red'],
+                ['Balance', `$${overallStats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, ''],
+                ['Equity', `(${overallStats.totalReturn >= 0 ? '+' : ''}${overallStats.totalReturn.toFixed(2)}%) $${overallStats.currentEquity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, ''],
+                ['All-time Winrate', `${overallStats.winrate.toFixed(1)}%`, ''],
+                ['All-time Sharpe', overallStats.sharpe.toFixed(2), ''],
+                ['Avg. Monthly Return', `${overallStats.avgMonthlyReturn >= 0 ? '+' : ''}${overallStats.avgMonthlyReturn.toFixed(2)}%`, overallStats.avgMonthlyReturn >= 0 ? 'text-green' : 'text-red'],
+                ['Total Profit', `$${overallStats.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, overallStats.totalProfit >= 0 ? 'text-green' : 'text-red'],
+              ].map(([label, value, color]) => (
+                <div key={label} className="flex justify-between items-center py-1 border-b border-border/50">
+                  <span className="text-text-secondary">{label}</span>
+                  <span className={`font-mono ${color}`}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Account Details */}
       <div>

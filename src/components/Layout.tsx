@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Table, Settings as SettingsIcon, Calendar, BookOpen, LogOut, ChevronDown, Plus, Trash2, Check, X, Eye } from 'lucide-react';
+import { LayoutDashboard, Table, Settings as SettingsIcon, Calendar, BookOpen, LogOut, ChevronDown, Plus, Trash2, Check, X, Eye, TrendingUp, ShieldAlert } from 'lucide-react';
 import type { Profile } from '../store';
 
 interface Props {
@@ -16,8 +16,10 @@ interface Props {
 }
 
 const navItems = [
-  { to: '/', icon: Table, label: 'Trades' },
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/', icon: LayoutDashboard, label: 'Overview' },
+  { to: '/return', icon: TrendingUp, label: 'Return' },
+  { to: '/risk', icon: ShieldAlert, label: 'Risk' },
+  { to: '/trades', icon: Table, label: 'Trades' },
   { to: '/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/settings', icon: SettingsIcon, label: 'Settings' },
   { to: '/guide', icon: BookOpen, label: 'Guide' },
