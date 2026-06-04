@@ -11,10 +11,10 @@ interface Props {
 
 function StatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="bg-bg-secondary rounded-lg border border-border p-4">
-      <p className="text-xs text-text-secondary mb-1">{label}</p>
-      <p className={`text-xl font-bold font-mono ${color || ''}`}>{value}</p>
-      {sub && <p className="text-xs text-text-secondary mt-0.5">{sub}</p>}
+    <div className="bg-bg-secondary rounded-lg border border-border p-3 overflow-hidden">
+      <p className="text-[10px] text-text-secondary mb-1 truncate">{label}</p>
+      <p className={`text-sm font-bold font-mono truncate ${color || ''}`}>{value}</p>
+      {sub && <p className="text-[10px] text-text-secondary mt-0.5 truncate">{sub}</p>}
     </div>
   );
 }
