@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getToken, readFile, writeFile } from './github';
+import { getToken, readFile, writeFile } from './github.js';
 import { createHash } from 'crypto';
 
 const REGISTRY_PATH = 'instances.json';
