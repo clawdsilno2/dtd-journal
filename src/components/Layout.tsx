@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Table, Settings as SettingsIcon, Calendar, BookOpen, ChevronDown, Plus, Trash2, Check, X } from 'lucide-react';
+import { LayoutDashboard, Table, Settings as SettingsIcon, Calendar, BookOpen, LogOut, ChevronDown, Plus, Trash2, Check, X } from 'lucide-react';
 import type { Profile } from '../store';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   onCreateProfile: (name: string) => void;
   onDeleteProfile: (id: string) => void;
   onRenameProfile: (id: string, name: string) => void;
-  username: string;
+  onLogout: () => void;
 }
 
 const navItems = [
@@ -21,7 +21,7 @@ const navItems = [
   { to: '/guide', icon: BookOpen, label: 'Guide' },
 ];
 
-export default function Layout({ profiles, activeProfile, onSwitchProfile, onCreateProfile, onDeleteProfile, onRenameProfile, username }: Props) {
+export default function Layout({ profiles, activeProfile, onSwitchProfile, onCreateProfile, onDeleteProfile, onRenameProfile, onLogout }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -156,7 +156,12 @@ export default function Layout({ profiles, activeProfile, onSwitchProfile, onCre
           ))}
         </div>
         <div className="p-3 border-t border-border">
-          <p className="text-xs text-text-secondary truncate px-3">{username}</p>
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-text-secondary hover:text-red rounded-lg hover:bg-bg-tertiary transition-colors"
+          >
+            <LogOut size={14} /> Log out
+          </button>
         </div>
       </nav>
       <main className="flex-1 overflow-auto">

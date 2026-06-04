@@ -8,47 +8,69 @@ import SettingsPage from './pages/SettingsPage';
 import Guide from './pages/Guide';
 import { useTrades, useSettings, useProfiles } from './store';
 
-function UsernamePrompt({ onSubmit }: { onSubmit: (name: string) => void }) {
-  const [name, setName] = useState('');
+function LoginPrompt({ onSubmit }: { onSubmit: (key: string) => void }) {
+  const [pass, setPass] = useState('');
   return (
     <div className="fixed inset-0 bg-bg-primary flex items-center justify-center z-50">
       <div className="bg-bg-secondary rounded-xl border border-border p-8 w-full max-w-sm space-y-4">
-        <h2 className="text-lg font-bold text-text-primary">Welcome to DTD Journal</h2>
-        <p className="text-sm text-text-secondary">Enter your name to get started. This is used to keep your data separate from other users.</p>
+        <h2 className="text-lg font-bold text-text-primary">DTD Journal</h2>
+        <p className="text-sm text-text-secondary">Enter your passphrase to access your journal.</p>
         <input
           autoFocus
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && name.trim()) onSubmit(name.trim()); }}
-          placeholder="Your name..."
+          type="password"
+          value={pass}
+          onChange={e => setPass(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && pass.trim()) onSubmit(pass.trim()); }}
+          placeholder="Passphrase..."
           className="w-full text-sm"
         />
         <button
-          onClick={() => { if (name.trim()) onSubmit(name.trim()); }}
-          disabled={!name.trim()}
+          onClick={() => { if (pass.trim()) onSubmit(pass.trim()); }}
+          disabled={!pass.trim()}
           className="w-full px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-40"
         >
-          Continue
+          Enter
         </button>
       </div>
     </div>
   );
 }
 
-export default function App() {
-  const [username, setUsername] = useState<string | null>(() => localStorage.getItem('dtd-username'));
+// Simple hash to create a localStorage key from the passphrase
+function hashKey(passphrase: string): string {
+  let hash = 0;
+  for (let i = 0; i < passphrase.length; i++) {
+    const char = passphrase.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
 
-  const handleSetUsername = (name: string) => {
-    localStorage.setItem('dtd-username', name);
-    setUsername(name);
+export default function App() {
+  const [userKey, setUserKey] = useState<string | null>(() => localStorage.getItem('dtd-active-key'));
+
+  const handleLogin = (passphrase: string) => {
+    const key = hashKey(passphrase);
+    localStorage.setItem('dtd-active-key', key);
+    // Also store the passphrase label (not the raw pass) for backup filename
+    const label = passphrase.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 50);
+    localStorage.setItem('dtd-active-label', label);
+    setUserKey(key);
   };
 
-  const { profiles, activeProfile, activeId, setActiveId, createProfile, deleteProfile, renameProfile } = useProfiles();
-  const { trades, addTrade, updateTrade, deleteTrade } = useTrades(activeId);
-  const { settings, setSettings } = useSettings(activeId);
+  const handleLogout = () => {
+    localStorage.removeItem('dtd-active-key');
+    localStorage.removeItem('dtd-active-label');
+    setUserKey(null);
+  };
 
-  if (!username) {
-    return <UsernamePrompt onSubmit={handleSetUsername} />;
+  const { profiles, activeProfile, activeId, setActiveId, createProfile, deleteProfile, renameProfile } = useProfiles(userKey || '');
+  const { trades, addTrade, updateTrade, deleteTrade } = useTrades(userKey || '', activeId);
+  const { settings, setSettings } = useSettings(userKey || '', activeId);
+
+  if (!userKey) {
+    return <LoginPrompt onSubmit={handleLogin} />;
   }
 
   return (
@@ -62,7 +84,7 @@ export default function App() {
             onCreateProfile={createProfile}
             onDeleteProfile={deleteProfile}
             onRenameProfile={renameProfile}
-            username={username}
+            onLogout={handleLogout}
           />
         }>
           <Route path="/" element={<Trades trades={trades} settings={settings} addTrade={addTrade} updateTrade={updateTrade} deleteTrade={deleteTrade} />} />
