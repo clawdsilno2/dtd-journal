@@ -48,7 +48,7 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
           </div>
         </div>
 
-        <Section title="General Info">
+        <Section title="General Information">
           <Field label="Date">
             <input type="date" value={t.date} onChange={e => set({ date: e.target.value })} />
           </Field>
@@ -62,16 +62,13 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
           <Field label="W/L">
             <select value={t.winLoss} onChange={e => set({ winLoss: e.target.value as Trade['winLoss'] })}>
               <option value="">--</option>
-              <option value="Win">Win</option>
-              <option value="Loss">Loss</option>
+              <option value="W">W</option>
+              <option value="L">L</option>
               <option value="BE">BE</option>
             </select>
           </Field>
           <Field label="W/L Specifics">
-            <select value={t.winLossSpecifics} onChange={e => set({ winLossSpecifics: e.target.value })}>
-              <option value="">--</option>
-              {settings.wlSpecifics.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <input value={t.winLossSpecifics} onChange={e => set({ winLossSpecifics: e.target.value })} />
           </Field>
           <Field label="Buy/Sell">
             <select value={t.buySell} onChange={e => set({ buySell: e.target.value as Trade['buySell'] })}>
@@ -83,6 +80,7 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
           <Field label="Risk ($)">
             <input type="number" step="0.01" value={t.risk || ''} onChange={e => set({ risk: +e.target.value })} />
           </Field>
+          <Field label="Net Result" computed={`$${getNetResult(t).toFixed(2)}`} />
           <Field label="Result ($)">
             <input type="number" step="0.01" value={t.result || ''} onChange={e => set({ result: +e.target.value })} />
           </Field>
@@ -92,7 +90,6 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
           <Field label="Swaps ($)">
             <input type="number" step="0.01" value={t.swaps || ''} onChange={e => set({ swaps: +e.target.value })} />
           </Field>
-          <Field label="Net Result" computed={`$${getNetResult(t).toFixed(2)}`} />
           <Field label="Net RR" computed={getNetRR(t).toFixed(2) + 'R'} />
         </Section>
 
@@ -122,129 +119,193 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
               {settings.entryTypes.map(et => <option key={et} value={et}>{et}</option>)}
             </select>
           </Field>
-          <Field label="Confluence">
-            <div className="flex flex-wrap gap-3 text-xs">
-              {[
-                ['imbalance', 'IMB'],
-                ['orderBlock', 'OB'],
-                ['supplyZone', 'SZ'],
-                ['ote', 'OTE'],
-              ].map(([key, label]) => (
-                <label key={key} className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={t[key as keyof Trade] as boolean}
-                    onChange={e => set({ [key]: e.target.checked })}
-                    className="w-3.5 h-3.5"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
+          <Field label="Imbalance">
+            <select value={t.imbalance ? 'Yes' : 'No'} onChange={e => set({ imbalance: e.target.value === 'Yes' })}>
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </Field>
+          <Field label="OB">
+            <select value={t.orderBlock ? 'Yes' : 'No'} onChange={e => set({ orderBlock: e.target.value === 'Yes' })}>
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </Field>
+          <Field label="SZ">
+            <select value={t.supplyZone ? 'Yes' : 'No'} onChange={e => set({ supplyZone: e.target.value === 'Yes' })}>
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </Field>
+          <Field label="OTE">
+            <select value={t.ote ? 'Yes' : 'No'} onChange={e => set({ ote: e.target.value === 'Yes' })}>
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
           </Field>
         </Section>
 
-        <Section title="Time Specifics">
+        <Section title="Time Specifics (UTC -4)">
           <Field label="Entry Time">
             <input type="time" value={t.entryTime} onChange={e => set({ entryTime: e.target.value })} />
           </Field>
+          <Field label="Zone" computed={getSession(t.entryTime, settings.sessions)} />
           <Field label="Exit Time">
             <input type="time" value={t.exitTime} onChange={e => set({ exitTime: e.target.value })} />
           </Field>
-          <Field label="Session" computed={getSession(t.entryTime, settings.sessions)} />
           <Field label="Duration" computed={getDuration(t.entryTime, t.exitTime)} />
         </Section>
 
         <Section title="MAP / MFP">
-          <Field label="MFP Pips">
+          <Field label="MFP (pips)">
             <input type="number" step="0.1" value={t.mfpPips || ''} onChange={e => set({ mfpPips: +e.target.value })} />
           </Field>
-          <Field label="MFP %" computed={getMfpPercent(t).toFixed(1) + '%'} />
-          <Field label="MAP Pips">
+          <Field label="MFP (%)" computed={getMfpPercent(t).toFixed(1) + '%'} />
+          <Field label="MAP (pips)">
             <input type="number" step="0.1" value={t.mapPips || ''} onChange={e => set({ mapPips: +e.target.value })} />
           </Field>
-          <Field label="MAP %" computed={getMapPercent(t).toFixed(1) + '%'} />
+          <Field label="MAP (%)" computed={getMapPercent(t).toFixed(1) + '%'} />
         </Section>
 
         <Section title="Exit Specifics">
           <Field label="P1">
             <input type="number" step="0.01" value={t.p1 || ''} onChange={e => set({ p1: +e.target.value })} />
           </Field>
-          <Field label="AR StDev (P1)">
-            <input type="number" step="0.01" value={t.arStdev1 || ''} onChange={e => set({ arStdev1: +e.target.value })} />
+          <Field label="AR StDev">
+            <select value={t.arStdev1} onChange={e => set({ arStdev1: e.target.value })}>
+              <option value="">--</option>
+              {settings.arStDevOptions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
           </Field>
           <Field label="P2">
             <input type="number" step="0.01" value={t.p2 || ''} onChange={e => set({ p2: +e.target.value })} />
           </Field>
-          <Field label="AR StDev (P2)">
-            <input type="number" step="0.01" value={t.arStdev2 || ''} onChange={e => set({ arStdev2: +e.target.value })} />
+          <Field label="AR StDev">
+            <select value={t.arStdev2} onChange={e => set({ arStdev2: e.target.value })}>
+              <option value="">--</option>
+              {settings.arStDevOptions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
           </Field>
-          <Field label="Full Pos Out">
-            <input value={t.fullPosOut} onChange={e => set({ fullPosOut: e.target.value })} />
+          <Field label="Full Pos. Out">
+            <select value={t.fullPosOut} onChange={e => set({ fullPosOut: e.target.value })}>
+              <option value="">--</option>
+              {settings.fullPosOutOptions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
           </Field>
           <Field label="Further Partials">
             <input value={t.furtherPartials} onChange={e => set({ furtherPartials: e.target.value })} />
           </Field>
+          <Field label="Notes">
+            <textarea rows={2} value={t.exitNotes} onChange={e => set({ exitNotes: e.target.value })} className="w-full resize-none" />
+          </Field>
         </Section>
 
         <Section title="Market Sentiment">
-          {(['weeklyBias', 'dailyBias', 'h4Bias', 'h1Bias'] as const).map(key => {
-            const labels: Record<string, string> = { weeklyBias: 'Weekly', dailyBias: 'Daily', h4Bias: '4H', h1Bias: '1H' };
-            return (
-              <Field key={key} label={labels[key]}>
-                <select value={t[key]} onChange={e => set({ [key]: e.target.value })}>
-                  <option value="">--</option>
-                  {settings.biasOptions.map(b => <option key={b} value={b}>{b}</option>)}
-                </select>
-              </Field>
-            );
-          })}
+          <Field label="Weekly TF">
+            <select value={t.weeklyBias} onChange={e => set({ weeklyBias: e.target.value })}>
+              <option value="">--</option>
+              {settings.htfBiasOptions.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </Field>
+          <Field label="Daily TF">
+            <select value={t.dailyBias} onChange={e => set({ dailyBias: e.target.value })}>
+              <option value="">--</option>
+              {settings.htfBiasOptions.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </Field>
+          <Field label="4H TF">
+            <select value={t.h4Bias} onChange={e => set({ h4Bias: e.target.value })}>
+              <option value="">--</option>
+              {settings.htfBiasOptions.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </Field>
+          <Field label="1H TF">
+            <select value={t.h1Bias} onChange={e => set({ h1Bias: e.target.value })}>
+              <option value="">--</option>
+              {settings.h1BiasOptions.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </Field>
         </Section>
 
         <Section title="Narrative">
-          <Field label="Confluences">
-            <div className="flex flex-wrap gap-3 text-xs">
-              {[
-                ['protraction', 'Protraction'],
-                ['lqSweep', 'LQ Sweep'],
-                ['marketShift', 'Market Shift'],
-                ['divergence', 'Divergence'],
-              ].map(([key, label]) => (
-                <label key={key} className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={t[key as keyof Trade] as boolean}
-                    onChange={e => set({ [key]: e.target.checked })}
-                    className="w-3.5 h-3.5"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
+          <Field label="Protraction">
+            <select value={t.protraction} onChange={e => set({ protraction: e.target.value })}>
+              <option value="">--</option>
+              {settings.protractionOptions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </Field>
+          <Field label="LQ Sweep">
+            <select value={t.lqSweep} onChange={e => set({ lqSweep: e.target.value })}>
+              <option value="">--</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </Field>
+          <Field label="Market Shift">
+            <select value={t.marketShift} onChange={e => set({ marketShift: e.target.value })}>
+              <option value="">--</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </Field>
+          <Field label="Divergence">
+            <select value={t.divergence} onChange={e => set({ divergence: e.target.value })}>
+              <option value="">--</option>
+              {settings.divergenceOptions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </Field>
+          <Field label="Divergence (+/-)">
+            <input value={t.divergencePosNeg} onChange={e => set({ divergencePosNeg: e.target.value })} />
           </Field>
           <Field label="High/Low">
             <select value={t.highLow} onChange={e => set({ highLow: e.target.value })}>
               <option value="">--</option>
-              <option value="High">High</option>
-              <option value="Low">Low</option>
+              {settings.highLowOptions.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
           </Field>
         </Section>
 
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-accent border-b border-border pb-1">Notes & Links</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <h3 className="text-sm font-semibold text-accent border-b border-border pb-1">Trade Notes / Emotions / Key Notes</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Field label="Trade Notes">
+              <textarea rows={2} value={t.tradeNotes} onChange={e => set({ tradeNotes: e.target.value })} className="w-full resize-none" />
+            </Field>
             <Field label="Emotions">
               <textarea rows={2} value={t.emotions} onChange={e => set({ emotions: e.target.value })} className="w-full resize-none" />
             </Field>
             <Field label="Key Notes">
               <textarea rows={2} value={t.keyNotes} onChange={e => set({ keyNotes: e.target.value })} className="w-full resize-none" />
             </Field>
-            <Field label="Trade Link">
-              <input value={t.tradeLink} onChange={e => set({ tradeLink: e.target.value })} className="w-full" />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-accent border-b border-border pb-1">Trade Links</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Field label="Flow">
+              <input value={t.tradeLinkFlow} onChange={e => set({ tradeLinkFlow: e.target.value })} className="w-full" />
             </Field>
-            <Field label="DXY Link">
-              <input value={t.dxyLink} onChange={e => set({ dxyLink: e.target.value })} className="w-full" />
+            <Field label="Flux">
+              <input value={t.tradeLinkFlux} onChange={e => set({ tradeLinkFlux: e.target.value })} className="w-full" />
+            </Field>
+            <Field label="ETF">
+              <input value={t.tradeLinkETF} onChange={e => set({ tradeLinkETF: e.target.value })} className="w-full" />
+            </Field>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-accent border-b border-border pb-1">DXY Links</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Field label="Flow">
+              <input value={t.dxyLinkFlow} onChange={e => set({ dxyLinkFlow: e.target.value })} className="w-full" />
+            </Field>
+            <Field label="Flux">
+              <input value={t.dxyLinkFlux} onChange={e => set({ dxyLinkFlux: e.target.value })} className="w-full" />
+            </Field>
+            <Field label="ETF">
+              <input value={t.dxyLinkETF} onChange={e => set({ dxyLinkETF: e.target.value })} className="w-full" />
             </Field>
           </div>
         </div>

@@ -72,8 +72,8 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
                     <td className="px-3 py-2 font-medium">{t.pair}</td>
                     <td className="px-3 py-2">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        t.winLoss === 'Win' ? 'bg-green/20 text-green' :
-                        t.winLoss === 'Loss' ? 'bg-red/20 text-red' :
+                        t.winLoss === 'W' ? 'bg-green/20 text-green' :
+                        t.winLoss === 'L' ? 'bg-red/20 text-red' :
                         t.winLoss === 'BE' ? 'bg-yellow/20 text-yellow' :
                         'text-text-secondary'
                       }`}>

@@ -6,7 +6,7 @@ interface Props {
   setSettings: (s: Settings) => void;
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-bg-secondary rounded-lg border border-border p-5 space-y-4">
       <h3 className="text-sm font-semibold text-accent">{title}</h3>
@@ -32,26 +32,28 @@ export default function SettingsPage({ settings, setSettings }: Props) {
     update({ sessions: settings.sessions.filter((_, i) => i !== index) });
   };
 
-  const updateList = (key: 'pairs' | 'entryTypes' | 'wlSpecifics' | 'tfOptions' | 'biasOptions', index: number, value: string) => {
+  type ListKey = 'pairs' | 'entryTypes' | 'tfOptions' | 'htfBiasOptions' | 'h1BiasOptions' | 'divergenceOptions' | 'protractionOptions' | 'highLowOptions' | 'arStDevOptions' | 'fullPosOutOptions';
+
+  const updateList = (key: ListKey, index: number, value: string) => {
     const list = [...settings[key]];
     list[index] = value;
     update({ [key]: list });
   };
 
-  const addToList = (key: 'pairs' | 'entryTypes' | 'wlSpecifics' | 'tfOptions' | 'biasOptions') => {
+  const addToList = (key: ListKey) => {
     update({ [key]: [...settings[key], ''] });
   };
 
-  const removeFromList = (key: 'pairs' | 'entryTypes' | 'wlSpecifics' | 'tfOptions' | 'biasOptions', index: number) => {
-    update({ [key]: settings[key].filter((_, i) => i !== index) });
+  const removeFromList = (key: ListKey, index: number) => {
+    update({ [key]: settings[key].filter((_: string, i: number) => i !== index) });
   };
 
-  function ListEditor({ label, listKey }: { label: string; listKey: 'pairs' | 'entryTypes' | 'wlSpecifics' | 'tfOptions' | 'biasOptions' }) {
+  function ListEditor({ label, listKey }: { label: string; listKey: ListKey }) {
     return (
       <div>
         <label className="text-xs text-text-secondary font-medium block mb-2">{label}</label>
         <div className="flex flex-wrap gap-2">
-          {settings[listKey].map((v, i) => (
+          {settings[listKey].map((v: string, i: number) => (
             <div key={i} className="flex items-center gap-1">
               <input
                 value={v}
@@ -73,34 +75,35 @@ export default function SettingsPage({ settings, setSettings }: Props) {
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
-      <h2 className="text-xl font-bold">Settings</h2>
+      <h2 className="text-xl font-bold">Settings (List Variables)</h2>
 
-      <Section title="Account Details">
+      <SectionBlock title="Strategy Editables">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="text-xs text-text-secondary font-medium block mb-1">Account Name</label>
+            <label className="text-xs text-text-secondary font-medium block mb-1">Name</label>
             <input value={settings.accountName} onChange={e => update({ accountName: e.target.value })} className="w-full" />
           </div>
           <div>
-            <label className="text-xs text-text-secondary font-medium block mb-1">Prop Firm</label>
-            <input value={settings.propFirm} onChange={e => update({ propFirm: e.target.value })} className="w-full" />
+            <label className="text-xs text-text-secondary font-medium block mb-1">Dashboard Name</label>
+            <input value={settings.dashboardName} onChange={e => update({ dashboardName: e.target.value })} className="w-full" />
           </div>
           <div>
             <label className="text-xs text-text-secondary font-medium block mb-1">Starting Balance ($)</label>
             <input type="number" value={settings.startingBalance || ''} onChange={e => update({ startingBalance: +e.target.value })} className="w-full" />
           </div>
         </div>
-      </Section>
+        <div className="space-y-4 mt-4">
+          <ListEditor label="Entry Models" listKey="entryTypes" />
+          <ListEditor label="Entry TF" listKey="tfOptions" />
+          <ListEditor label="Pair" listKey="pairs" />
+        </div>
+      </SectionBlock>
 
-      <Section title="Trading Pairs">
-        <ListEditor label="Pairs" listKey="pairs" />
-      </Section>
-
-      <Section title="Session Times">
-        <div className="space-y-2">
+      <SectionBlock title="Analyzing Editables">
+        <div className="space-y-3">
           {settings.sessions.map((s, i) => (
             <div key={i} className="flex items-center gap-2">
-              <input value={s.name} onChange={e => updateSession(i, 'name', e.target.value)} placeholder="Name" className="w-32" />
+              <input value={s.name} onChange={e => updateSession(i, 'name', e.target.value)} placeholder="Name" className="w-28" />
               <input type="time" value={s.startTime} onChange={e => updateSession(i, 'startTime', e.target.value)} />
               <span className="text-text-secondary text-xs">to</span>
               <input type="time" value={s.endTime} onChange={e => updateSession(i, 'endTime', e.target.value)} />
@@ -113,22 +116,22 @@ export default function SettingsPage({ settings, setSettings }: Props) {
             <Plus size={14} /> Add Session
           </button>
         </div>
-      </Section>
-
-      <Section title="Dropdown Options">
-        <div className="space-y-4">
-          <ListEditor label="Entry Types" listKey="entryTypes" />
-          <ListEditor label="W/L Specifics" listKey="wlSpecifics" />
-          <ListEditor label="Timeframes" listKey="tfOptions" />
-          <ListEditor label="Bias Options" listKey="biasOptions" />
+        <div className="space-y-4 mt-4 pt-4 border-t border-border">
+          <ListEditor label="AR StDev" listKey="arStDevOptions" />
+          <ListEditor label="W/D/4H Bias" listKey="htfBiasOptions" />
+          <ListEditor label="1H Bias" listKey="h1BiasOptions" />
+          <ListEditor label="Divergence" listKey="divergenceOptions" />
+          <ListEditor label="Protraction" listKey="protractionOptions" />
+          <ListEditor label="High/Low" listKey="highLowOptions" />
+          <ListEditor label="Full Pos. Out" listKey="fullPosOutOptions" />
         </div>
-      </Section>
+      </SectionBlock>
 
-      <Section title="Data Management">
+      <SectionBlock title="Data Management">
         <div className="flex gap-3">
           <button
             onClick={() => {
-              const data = JSON.stringify({ trades: JSON.parse(localStorage.getItem('dtd-trades') || '[]'), settings }, null, 2);
+              const data = JSON.stringify({ trades: JSON.parse(localStorage.getItem(`dtd-trades-${location.search}`) || '[]'), settings }, null, 2);
               const blob = new Blob([data], { type: 'application/json' });
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');
@@ -154,7 +157,6 @@ export default function SettingsPage({ settings, setSettings }: Props) {
                 reader.onload = () => {
                   try {
                     const data = JSON.parse(reader.result as string);
-                    if (data.trades) localStorage.setItem('dtd-trades', JSON.stringify(data.trades));
                     if (data.settings) setSettings(data.settings);
                     window.location.reload();
                   } catch {
@@ -166,7 +168,7 @@ export default function SettingsPage({ settings, setSettings }: Props) {
             />
           </label>
         </div>
-      </Section>
+      </SectionBlock>
     </div>
   );
 }

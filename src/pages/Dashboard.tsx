@@ -55,12 +55,12 @@ function BreakdownTable({ title, rows }: { title: string; rows: BreakdownRow[] }
 }
 
 function computeRow(group: Trade[]): Omit<BreakdownRow, 'label' | 'indent'> {
-  const wins = group.filter(t => t.winLoss === 'Win').length;
+  const wins = group.filter(t => t.winLoss === 'W').length;
   const be = group.filter(t => t.winLoss === 'BE').length;
-  const losses = group.filter(t => t.winLoss === 'Loss').length;
+  const losses = group.filter(t => t.winLoss === 'L').length;
   const totalR = group.reduce((sum, t) => sum + getNetRR(t), 0);
-  const winTrades = group.filter(t => t.winLoss === 'Win');
-  const lossTrades = group.filter(t => t.winLoss === 'Loss');
+  const winTrades = group.filter(t => t.winLoss === 'W');
+  const lossTrades = group.filter(t => t.winLoss === 'L');
   const avgWinR = winTrades.length ? winTrades.reduce((s, t) => s + getNetRR(t), 0) / winTrades.length : 0;
   const avgLossR = lossTrades.length ? lossTrades.reduce((s, t) => s + getNetRR(t), 0) / lossTrades.length : 0;
   return {
@@ -117,8 +117,8 @@ export default function Dashboard({ trades, settings }: Props) {
     if (!trades.length) return null;
 
     const totalR = trades.reduce((s, t) => s + getNetRR(t), 0);
-    const wins = trades.filter(t => t.winLoss === 'Win').length;
-    const losses = trades.filter(t => t.winLoss === 'Loss').length;
+    const wins = trades.filter(t => t.winLoss === 'W').length;
+    const losses = trades.filter(t => t.winLoss === 'L').length;
     const be = trades.filter(t => t.winLoss === 'BE').length;
     const totalNet = trades.reduce((s, t) => s + getNetResult(t), 0);
     const avgPerTrade = totalR / trades.length;

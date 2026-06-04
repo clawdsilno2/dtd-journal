@@ -3,7 +3,7 @@ export interface Trade {
   tradeNumber: number;
   date: string; // YYYY-MM-DD
   pair: string;
-  winLoss: '' | 'Win' | 'Loss' | 'BE';
+  winLoss: '' | 'W' | 'L' | 'BE';
   winLossSpecifics: string;
   buySell: '' | 'Buy' | 'Sell';
   risk: number;
@@ -29,27 +29,34 @@ export interface Trade {
   mapPips: number;
   // Exit Specifics
   p1: number;
-  arStdev1: number;
+  arStdev1: string;
   p2: number;
-  arStdev2: number;
+  arStdev2: string;
   fullPosOut: string;
   furtherPartials: string;
+  exitNotes: string;
   // Market Sentiment
   weeklyBias: string;
   dailyBias: string;
   h4Bias: string;
   h1Bias: string;
   // Narrative
-  protraction: boolean;
-  lqSweep: boolean;
-  marketShift: boolean;
-  divergence: boolean;
+  protraction: string;
+  lqSweep: string;
+  marketShift: string;
+  divergence: string;
+  divergencePosNeg: string;
   highLow: string;
   // Other
+  tradeNotes: string;
   emotions: string;
   keyNotes: string;
-  tradeLink: string;
-  dxyLink: string;
+  tradeLinkFlow: string;
+  tradeLinkFlux: string;
+  tradeLinkETF: string;
+  dxyLinkFlow: string;
+  dxyLinkFlux: string;
+  dxyLinkETF: string;
 }
 
 export interface SessionTime {
@@ -60,34 +67,44 @@ export interface SessionTime {
 
 export interface Settings {
   accountName: string;
-  propFirm: string;
+  dashboardName: string;
   startingBalance: number;
   pairs: string[];
   sessions: SessionTime[];
   entryTypes: string[];
-  wlSpecifics: string[];
   tfOptions: string[];
-  biasOptions: string[];
+  htfBiasOptions: string[];
+  h1BiasOptions: string[];
+  divergenceOptions: string[];
+  protractionOptions: string[];
+  highLowOptions: string[];
+  arStDevOptions: string[];
+  fullPosOutOptions: string[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  accountName: '',
-  propFirm: '',
-  startingBalance: 0,
-  pairs: ['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY'],
+  accountName: 'AO Trader',
+  dashboardName: 'Data Collection Sheet',
+  startingBalance: 100000,
+  pairs: ['EURUSD', 'GBPUSD'],
   sessions: [
-    { name: 'Asia', startTime: '00:00', endTime: '03:00' },
-    { name: 'Pre London', startTime: '03:00', endTime: '05:00' },
-    { name: 'LOKZ', startTime: '05:00', endTime: '07:00' },
-    { name: 'London', startTime: '07:00', endTime: '10:00' },
-    { name: 'NYKZ', startTime: '10:00', endTime: '12:00' },
-    { name: 'New York', startTime: '12:00', endTime: '17:00' },
-    { name: 'Dead Time', startTime: '17:00', endTime: '00:00' },
+    { name: 'Asia', startTime: '19:00', endTime: '00:00' },
+    { name: 'Pre London', startTime: '00:00', endTime: '02:00' },
+    { name: 'LOKZ', startTime: '02:00', endTime: '05:00' },
+    { name: 'London', startTime: '05:00', endTime: '08:00' },
+    { name: 'NYKZ', startTime: '08:00', endTime: '11:00' },
+    { name: 'New York', startTime: '11:00', endTime: '15:00' },
+    { name: 'Dead Time', startTime: '15:00', endTime: '19:00' },
   ],
   entryTypes: ['E1', 'E2', 'Shift', 'Other'],
-  wlSpecifics: ['Full Win', 'Partial Win', 'Full Loss', 'Partial Loss', 'Breakeven'],
-  tfOptions: ['2M', '3M', '5M', '15M', '1H', '4H'],
-  biasOptions: ['Bullish', 'Bearish', 'Neutral', 'No Bias'],
+  tfOptions: ['2m', '3m', '5m', '15m', '1h', '4h', 'D', 'W'],
+  htfBiasOptions: ['Bullish', 'Bearish', 'Neutral'],
+  h1BiasOptions: ['ProTrend', 'CounterTrend', 'Neutral'],
+  divergenceOptions: ['Yes', 'No', 'Positive', 'Negative'],
+  protractionOptions: ['0-SD', '1-SD', '2-SD'],
+  highLowOptions: ['Protected', 'Unprotected'],
+  arStDevOptions: ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5', '5.5', '6', '6.5', '7', '7.5'],
+  fullPosOutOptions: ['Full TP', 'P + Full TP', 'P + BE', 'P + Trailed SL', 'BE', 'Full SL', 'P + SL', 'Manual Exit'],
 };
 
 export function createEmptyTrade(tradeNumber: number): Trade {
@@ -117,24 +134,31 @@ export function createEmptyTrade(tradeNumber: number): Trade {
     mfpPips: 0,
     mapPips: 0,
     p1: 0,
-    arStdev1: 0,
+    arStdev1: '',
     p2: 0,
-    arStdev2: 0,
+    arStdev2: '',
     fullPosOut: '',
     furtherPartials: '',
+    exitNotes: '',
     weeklyBias: '',
     dailyBias: '',
     h4Bias: '',
     h1Bias: '',
-    protraction: false,
-    lqSweep: false,
-    marketShift: false,
-    divergence: false,
+    protraction: '',
+    lqSweep: '',
+    marketShift: '',
+    divergence: '',
+    divergencePosNeg: '',
     highLow: '',
+    tradeNotes: '',
     emotions: '',
     keyNotes: '',
-    tradeLink: '',
-    dxyLink: '',
+    tradeLinkFlow: '',
+    tradeLinkFlux: '',
+    tradeLinkETF: '',
+    dxyLinkFlow: '',
+    dxyLinkFlux: '',
+    dxyLinkETF: '',
   };
 }
 
