@@ -132,8 +132,20 @@ const SAMPLE_SETTINGS: Settings = {
 // --- Profile-scoped trades & settings ---
 
 // Backfill missing fields on old trades so nothing crashes
-function migrateTrade(t: Partial<Trade>): Trade {
-  return {
+function migrateTrade(raw: Partial<Trade>): Trade {
+  // Cast to any to read legacy fields that no longer exist on the type
+  const legacy = raw as Record<string, unknown>;
+
+  // Migrate fields that changed type (boolean→string, number→string, renamed)
+  const migrateStr = (v: unknown, fallback = ''): string => {
+    if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+    if (typeof v === 'number') return v ? String(v) : '';
+    return (v as string) || fallback;
+  };
+  const wl = legacy.winLoss as string || '';
+  const winLoss = (wl === 'Win' ? 'W' : wl === 'Loss' ? 'L' : wl) as Trade['winLoss'];
+
+  const base: Trade = {
     id: '', tradeNumber: 0, date: '', pair: '', winLoss: '', winLossSpecifics: '', buySell: '',
     risk: 0, result: 0, commissions: 0, swaps: 0,
     entryTF: '', entryPrice: 0, slPips: 0, tpPips: 0,
@@ -145,20 +157,27 @@ function migrateTrade(t: Partial<Trade>): Trade {
     tradeNotes: '', emotions: '', keyNotes: '',
     tradeLinkFlow: '', tradeLinkFlux: '', tradeLinkETF: '',
     dxyLinkFlow: '', dxyLinkFlux: '', dxyLinkETF: '',
-    ...t,
-    // Migrate old boolean narrative fields to string
-    protraction: typeof t.protraction === 'boolean' ? '' : (t.protraction || ''),
-    lqSweep: typeof t.lqSweep === 'boolean' ? (t.lqSweep ? 'Yes' : 'No') : (t.lqSweep || ''),
-    marketShift: typeof t.marketShift === 'boolean' ? (t.marketShift ? 'Yes' : 'No') : (t.marketShift || ''),
-    divergence: typeof t.divergence === 'boolean' ? (t.divergence ? 'Yes' : 'No') : (t.divergence || ''),
-    // Migrate old string arStdev to new format
-    arStdev1: typeof t.arStdev1 === 'number' ? String(t.arStdev1 || '') : (t.arStdev1 || ''),
-    arStdev2: typeof t.arStdev2 === 'number' ? String(t.arStdev2 || '') : (t.arStdev2 || ''),
-    // Migrate old W/L values
-    winLoss: t.winLoss === 'Win' ? 'W' : t.winLoss === 'Loss' ? 'L' : (t.winLoss || '') as Trade['winLoss'],
-    // Migrate old single link fields
-    tradeLinkFlow: t.tradeLinkFlow || (t as Record<string, unknown>).tradeLink as string || '',
-    dxyLinkFlow: t.dxyLinkFlow || (t as Record<string, unknown>).dxyLink as string || '',
+  };
+
+  return {
+    ...base,
+    ...raw,
+    winLoss,
+    protraction: typeof legacy.protraction === 'boolean' ? '' : migrateStr(legacy.protraction),
+    lqSweep: migrateStr(legacy.lqSweep),
+    marketShift: migrateStr(legacy.marketShift),
+    divergence: migrateStr(legacy.divergence),
+    divergencePosNeg: (raw.divergencePosNeg as string) || '',
+    arStdev1: migrateStr(legacy.arStdev1),
+    arStdev2: migrateStr(legacy.arStdev2),
+    exitNotes: (raw.exitNotes as string) || '',
+    tradeNotes: (raw.tradeNotes as string) || '',
+    tradeLinkFlow: (raw.tradeLinkFlow as string) || (legacy.tradeLink as string) || '',
+    tradeLinkFlux: (raw.tradeLinkFlux as string) || '',
+    tradeLinkETF: (raw.tradeLinkETF as string) || '',
+    dxyLinkFlow: (raw.dxyLinkFlow as string) || (legacy.dxyLink as string) || '',
+    dxyLinkFlux: (raw.dxyLinkFlux as string) || '',
+    dxyLinkETF: (raw.dxyLinkETF as string) || '',
   };
 }
 
