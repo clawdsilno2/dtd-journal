@@ -26,12 +26,9 @@ function InfoButton({ text, id }: { text: string; id: string }) {
         i
       </button>
       {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpenId(null)} />
-          <div className="absolute left-0 bottom-full mb-1 z-50 w-56 p-2.5 rounded-lg bg-bg-tertiary border border-border shadow-xl text-xs text-text-secondary leading-relaxed">
-            {text}
-          </div>
-        </>
+        <div className="absolute left-0 bottom-full mb-1 z-50 w-56 p-2.5 rounded-lg bg-bg-tertiary border border-border shadow-xl text-xs text-text-secondary leading-relaxed">
+          {text}
+        </div>
       )}
     </span>
   );
@@ -71,8 +68,8 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
 
   return (
     <TooltipCtx.Provider value={{ openId: openTooltip, setOpenId: setOpenTooltip }}>
-    <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-8 z-50 overflow-auto pb-8">
-      <div className="bg-bg-secondary rounded-xl border border-border w-full max-w-4xl p-6 space-y-6">
+    <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-8 z-50 overflow-auto pb-8" onClick={() => setOpenTooltip(null)}>
+      <div className="bg-bg-secondary rounded-xl border border-border w-full max-w-4xl p-6 space-y-6" onClick={() => setOpenTooltip(null)}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">Trade #{t.tradeNumber}</h2>
           <div className="flex gap-2">
