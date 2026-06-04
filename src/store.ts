@@ -131,14 +131,45 @@ const SAMPLE_SETTINGS: Settings = {
 
 // --- Profile-scoped trades & settings ---
 
+// Backfill missing fields on old trades so nothing crashes
+function migrateTrade(t: Partial<Trade>): Trade {
+  return {
+    id: '', tradeNumber: 0, date: '', pair: '', winLoss: '', winLossSpecifics: '', buySell: '',
+    risk: 0, result: 0, commissions: 0, swaps: 0,
+    entryTF: '', entryPrice: 0, slPips: 0, tpPips: 0,
+    entryType: '', imbalance: false, orderBlock: false, supplyZone: false, ote: false,
+    entryTime: '', exitTime: '', mfpPips: 0, mapPips: 0,
+    p1: 0, arStdev1: '', p2: 0, arStdev2: '', fullPosOut: '', furtherPartials: '', exitNotes: '',
+    weeklyBias: '', dailyBias: '', h4Bias: '', h1Bias: '',
+    protraction: '', lqSweep: '', marketShift: '', divergence: '', divergencePosNeg: '', highLow: '',
+    tradeNotes: '', emotions: '', keyNotes: '',
+    tradeLinkFlow: '', tradeLinkFlux: '', tradeLinkETF: '',
+    dxyLinkFlow: '', dxyLinkFlux: '', dxyLinkETF: '',
+    ...t,
+    // Migrate old boolean narrative fields to string
+    protraction: typeof t.protraction === 'boolean' ? '' : (t.protraction || ''),
+    lqSweep: typeof t.lqSweep === 'boolean' ? (t.lqSweep ? 'Yes' : 'No') : (t.lqSweep || ''),
+    marketShift: typeof t.marketShift === 'boolean' ? (t.marketShift ? 'Yes' : 'No') : (t.marketShift || ''),
+    divergence: typeof t.divergence === 'boolean' ? (t.divergence ? 'Yes' : 'No') : (t.divergence || ''),
+    // Migrate old string arStdev to new format
+    arStdev1: typeof t.arStdev1 === 'number' ? String(t.arStdev1 || '') : (t.arStdev1 || ''),
+    arStdev2: typeof t.arStdev2 === 'number' ? String(t.arStdev2 || '') : (t.arStdev2 || ''),
+    // Migrate old W/L values
+    winLoss: t.winLoss === 'Win' ? 'W' : t.winLoss === 'Loss' ? 'L' : (t.winLoss || '') as Trade['winLoss'],
+    // Migrate old single link fields
+    tradeLinkFlow: t.tradeLinkFlow || (t as Record<string, unknown>).tradeLink as string || '',
+    dxyLinkFlow: t.dxyLinkFlow || (t as Record<string, unknown>).dxyLink as string || '',
+  };
+}
+
 export function useTrades(profileId: string) {
   const key = `dtd-trades-${profileId}`;
   const [trades, setTrades] = useState<Trade[]>(() => {
-    const stored = loadJSON<Trade[]>(key, []);
-    if (stored.length > 0) return stored;
+    const stored = loadJSON<Partial<Trade>[]>(key, []);
+    if (stored.length > 0) return stored.map(migrateTrade);
     if (profileId === 'default') {
-      const legacy = loadJSON<Trade[]>('dtd-trades', []);
-      if (legacy.length > 0) return legacy;
+      const legacy = loadJSON<Partial<Trade>[]>('dtd-trades', []);
+      if (legacy.length > 0) return legacy.map(migrateTrade);
       return SAMPLE_TRADES;
     }
     return [];
@@ -161,14 +192,20 @@ export function useTrades(profileId: string) {
   return { trades, setTrades, addTrade, updateTrade, deleteTrade };
 }
 
+// Merge stored settings with defaults so new fields always exist
+function mergeSettings(stored: Partial<Settings> | null, defaults: Settings): Settings {
+  if (!stored) return defaults;
+  return { ...defaults, ...stored };
+}
+
 export function useSettings(profileId: string) {
   const key = `dtd-settings-${profileId}`;
   const [settings, setSettings] = useState<Settings>(() => {
-    const stored = loadJSON<Settings | null>(key, null);
-    if (stored?.accountName) return stored;
+    const stored = loadJSON<Partial<Settings> | null>(key, null);
+    if (stored?.accountName) return mergeSettings(stored, DEFAULT_SETTINGS);
     if (profileId === 'default') {
-      const legacy = loadJSON<Settings | null>('dtd-settings', null);
-      if (legacy?.accountName) return legacy;
+      const legacy = loadJSON<Partial<Settings> | null>('dtd-settings', null);
+      if (legacy?.accountName) return mergeSettings(legacy, SAMPLE_SETTINGS);
       return SAMPLE_SETTINGS;
     }
     return DEFAULT_SETTINGS;
