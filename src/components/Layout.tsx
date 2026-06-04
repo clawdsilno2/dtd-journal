@@ -10,6 +10,7 @@ interface Props {
   onCreateProfile: (name: string) => void;
   onDeleteProfile: (id: string) => void;
   onRenameProfile: (id: string, name: string) => void;
+  username: string;
 }
 
 const navItems = [
@@ -20,7 +21,7 @@ const navItems = [
   { to: '/guide', icon: BookOpen, label: 'Guide' },
 ];
 
-export default function Layout({ profiles, activeProfile, onSwitchProfile, onCreateProfile, onDeleteProfile, onRenameProfile }: Props) {
+export default function Layout({ profiles, activeProfile, onSwitchProfile, onCreateProfile, onDeleteProfile, onRenameProfile, username }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -153,6 +154,9 @@ export default function Layout({ profiles, activeProfile, onSwitchProfile, onCre
               {label}
             </NavLink>
           ))}
+        </div>
+        <div className="p-3 border-t border-border">
+          <p className="text-xs text-text-secondary truncate px-3">{username}</p>
         </div>
       </nav>
       <main className="flex-1 overflow-auto">

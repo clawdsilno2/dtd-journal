@@ -10,19 +10,17 @@ function triggerBackup() {
   if (backupTimer) clearTimeout(backupTimer);
   backupTimer = setTimeout(() => {
     try {
+      const username = localStorage.getItem('dtd-username');
+      if (!username) return;
+
       // Collect all profile data from localStorage
       const profiles = JSON.parse(localStorage.getItem('dtd-profiles') || '[]');
       const activeProfile = localStorage.getItem('dtd-active-profile');
-      const backup: Record<string, unknown> = { profiles, activeProfile, backedUpAt: new Date().toISOString() };
+      const backup: Record<string, unknown> = { username, profiles, activeProfile, backedUpAt: new Date().toISOString() };
       for (const p of profiles) {
         backup[`trades-${p.id}`] = JSON.parse(localStorage.getItem(`dtd-trades-${p.id}`) || '[]');
         backup[`settings-${p.id}`] = JSON.parse(localStorage.getItem(`dtd-settings-${p.id}`) || 'null');
       }
-      // Also grab legacy keys
-      const legacyTrades = localStorage.getItem('dtd-trades');
-      const legacySettings = localStorage.getItem('dtd-settings');
-      if (legacyTrades) backup['trades-legacy'] = JSON.parse(legacyTrades);
-      if (legacySettings) backup['settings-legacy'] = JSON.parse(legacySettings);
 
       fetch('/api/backup', {
         method: 'POST',
