@@ -78,7 +78,7 @@ const SAMPLE_TRADES: Trade[] = [
   {
     id: 'sample-2', tradeNumber: 2, date: '2026-06-02', pair: 'XAUUSD', winLoss: 'Loss', winLossSpecifics: 'Full Loss', buySell: 'Sell',
     risk: 100, result: -100, commissions: -3.10, swaps: 0, entryTF: '5M', entryPrice: 2355.20, slPips: 40, tpPips: 80,
-    entryType: 'E2', imbalance: true, orderBlock: false, supplyZone: true, ote: false,
+    entryType: 'Shift', imbalance: true, orderBlock: false, supplyZone: true, ote: false,
     entryTime: '14:30', exitTime: '15:05', mfpPips: 30, mapPips: 42,
     p1: 0, arStdev1: 0, p2: 0, arStdev2: 0, fullPosOut: 'SL', furtherPartials: '',
     weeklyBias: 'Bullish', dailyBias: 'Bullish', h4Bias: 'Bearish', h1Bias: 'Bearish',
@@ -88,7 +88,7 @@ const SAMPLE_TRADES: Trade[] = [
   {
     id: 'sample-3', tradeNumber: 3, date: '2026-06-03', pair: 'EURUSD', winLoss: 'Win', winLossSpecifics: 'Partial Win', buySell: 'Buy',
     risk: 75, result: 112, commissions: -2.50, swaps: -0.40, entryTF: '15M', entryPrice: 1.08450, slPips: 15, tpPips: 30,
-    entryType: 'E3', imbalance: false, orderBlock: true, supplyZone: false, ote: true,
+    entryType: 'E2', imbalance: false, orderBlock: true, supplyZone: false, ote: true,
     entryTime: '06:20', exitTime: '08:10', mfpPips: 28, mapPips: 5,
     p1: 15, arStdev1: 0.8, p2: 10, arStdev2: 1.5, fullPosOut: '', furtherPartials: 'Trailed stop',
     weeklyBias: 'Bearish', dailyBias: 'Neutral', h4Bias: 'Bullish', h1Bias: 'Bullish',

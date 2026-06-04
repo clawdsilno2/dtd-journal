@@ -84,9 +84,9 @@ export const DEFAULT_SETTINGS: Settings = {
     { name: 'New York', startTime: '12:00', endTime: '17:00' },
     { name: 'Dead Time', startTime: '17:00', endTime: '00:00' },
   ],
-  entryTypes: ['E1', 'E2', 'E3', 'E4+'],
+  entryTypes: ['E1', 'E2', 'Shift', 'Other'],
   wlSpecifics: ['Full Win', 'Partial Win', 'Full Loss', 'Partial Loss', 'Breakeven'],
-  tfOptions: ['1M', '5M', '15M', '30M', '1H', '4H', 'D', 'W'],
+  tfOptions: ['2M', '3M', '5M', '15M', '1H', '4H'],
   biasOptions: ['Bullish', 'Bearish', 'Neutral', 'No Bias'],
 };
 

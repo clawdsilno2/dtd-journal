@@ -19,7 +19,7 @@ const sections = [
       },
       {
         heading: 'Entry Specifics',
-        body: 'Your entry model (E1, E2, E3, E4+) and confluence factors: Imbalance, Order Block (OB), Supply Zone (SZ), and OTE.',
+        body: 'Your entry model (E1, E2, Shift, Other) and confluence factors: Imbalance, Order Block (OB), Supply Zone (SZ), and OTE.',
       },
       {
         heading: 'Time Specifics',
@@ -161,7 +161,7 @@ const sections = [
       },
       {
         heading: 'Strategy (Entry Type)',
-        body: 'Performance by entry model (E1, E2, E3, E4+). Identify which setups have the highest edge.',
+        body: 'Performance by entry model (E1, E2, Shift, Other). Identify which setups have the highest edge.',
       },
     ],
   },
