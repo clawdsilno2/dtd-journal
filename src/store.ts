@@ -1,6 +1,37 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Trade, Settings } from './types';
 import { DEFAULT_SETTINGS } from './types';
+
+// --- Auto-backup to GitHub ---
+
+let backupTimer: ReturnType<typeof setTimeout> | null = null;
+
+function triggerBackup() {
+  if (backupTimer) clearTimeout(backupTimer);
+  backupTimer = setTimeout(() => {
+    try {
+      // Collect all profile data from localStorage
+      const profiles = JSON.parse(localStorage.getItem('dtd-profiles') || '[]');
+      const activeProfile = localStorage.getItem('dtd-active-profile');
+      const backup: Record<string, unknown> = { profiles, activeProfile, backedUpAt: new Date().toISOString() };
+      for (const p of profiles) {
+        backup[`trades-${p.id}`] = JSON.parse(localStorage.getItem(`dtd-trades-${p.id}`) || '[]');
+        backup[`settings-${p.id}`] = JSON.parse(localStorage.getItem(`dtd-settings-${p.id}`) || 'null');
+      }
+      // Also grab legacy keys
+      const legacyTrades = localStorage.getItem('dtd-trades');
+      const legacySettings = localStorage.getItem('dtd-settings');
+      if (legacyTrades) backup['trades-legacy'] = JSON.parse(legacyTrades);
+      if (legacySettings) backup['settings-legacy'] = JSON.parse(legacySettings);
+
+      fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backup),
+      }).catch(() => { /* silent fail */ });
+    } catch { /* silent fail */ }
+  }, 5000); // 5s debounce
+}
 
 function loadJSON<T>(key: string, fallback: T): T {
   try {
@@ -200,7 +231,12 @@ export function useTrades(profileId: string) {
   // Reload when profile changes
   useEffect(() => { setTrades(loadTrades(profileId)); }, [profileId]);
 
-  useEffect(() => { saveJSON(key, trades); }, [key, trades]);
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    saveJSON(key, trades);
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    triggerBackup();
+  }, [key, trades]);
 
   const addTrade = useCallback((trade: Trade) => {
     setTrades(prev => [...prev, trade]);
@@ -242,7 +278,12 @@ export function useSettings(profileId: string) {
   // Reload when profile changes
   useEffect(() => { setSettings(loadSettings(profileId)); }, [profileId]);
 
-  useEffect(() => { saveJSON(key, settings); }, [key, settings]);
+  const isFirstSettingsRender = useRef(true);
+  useEffect(() => {
+    saveJSON(key, settings);
+    if (isFirstSettingsRender.current) { isFirstSettingsRender.current = false; return; }
+    triggerBackup();
+  }, [key, settings]);
 
   return { settings, setSettings };
 }
