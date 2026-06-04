@@ -9,7 +9,9 @@ import CalendarView from './pages/CalendarView';
 import SettingsPage from './pages/SettingsPage';
 import Guide from './pages/Guide';
 import { useTrades, useSettings, useProfiles } from './store';
-import { Plus } from 'lucide-react';
+import { DEMO_TRADES } from './demoData';
+import { DEFAULT_SETTINGS } from './types';
+import { Plus, Play } from 'lucide-react';
 
 interface InstanceInfo {
   id: string;
@@ -18,7 +20,7 @@ interface InstanceInfo {
 }
 
 // --- Landing: list all instances ---
-function LandingPage({ onSelect, onCreate }: { onSelect: (inst: InstanceInfo) => void; onCreate: () => void }) {
+function LandingPage({ onSelect, onCreate, onDemo }: { onSelect: (inst: InstanceInfo) => void; onCreate: () => void; onDemo: () => void }) {
   const [instances, setInstances] = useState<InstanceInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,6 +60,14 @@ function LandingPage({ onSelect, onCreate }: { onSelect: (inst: InstanceInfo) =>
             >
               <Plus size={20} className="text-text-secondary" />
               <p className="text-sm text-text-secondary">New Journal</p>
+            </button>
+            <button
+              onClick={onDemo}
+              className="border-2 border-dashed border-border rounded-xl p-5 flex flex-col items-center justify-center gap-2 hover:border-accent/50 border-accent/30 transition-colors"
+            >
+              <Play size={20} className="text-accent" />
+              <p className="text-sm text-accent">Demo Journal</p>
+              <p className="text-[10px] text-text-secondary">20 sample trades</p>
             </button>
           </div>
         )}
@@ -267,11 +277,28 @@ type Screen =
 export default function App() {
   const [screen, setScreen] = useState<Screen>({ page: 'landing' });
 
+  const handleLoadDemo = () => {
+    const demoId = 'demo-' + Date.now().toString(36);
+    const prefix = `dtd-${demoId}-`;
+    // Seed localStorage with demo data
+    localStorage.setItem(`${prefix}profiles`, JSON.stringify([{ id: 'default', name: 'Demo' }]));
+    localStorage.setItem(`${prefix}active-profile`, JSON.stringify('default'));
+    localStorage.setItem(`${prefix}trades-default`, JSON.stringify(DEMO_TRADES));
+    localStorage.setItem(`${prefix}settings-default`, JSON.stringify({
+      ...DEFAULT_SETTINGS,
+      accountName: 'Demo Trader',
+      dashboardName: 'Demo Journal',
+      startingBalance: 100000,
+    }));
+    setScreen({ page: 'journal', instanceId: demoId, instanceName: 'Demo Journal', mode: 'edit' });
+  };
+
   if (screen.page === 'landing') {
     return (
       <LandingPage
         onSelect={inst => setScreen({ page: 'access', instance: inst })}
         onCreate={() => setScreen({ page: 'create' })}
+        onDemo={handleLoadDemo}
       />
     );
   }
