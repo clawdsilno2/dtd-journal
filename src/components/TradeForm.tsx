@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
-import type { Trade, Settings } from '../types';
-import { getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession } from '../types';
+import type { Trade, Settings, AccountLabel } from '../types';
+import { ACCOUNT_LABELS, getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession } from '../types';
 
 interface Props {
   trade: Trade;
@@ -76,6 +76,40 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
             <button onClick={() => onDelete(t.id)} className="px-3 py-1.5 text-xs bg-red/20 text-red rounded-lg hover:bg-red/30 transition-colors">Delete</button>
             <button onClick={onClose} className="px-3 py-1.5 text-xs bg-bg-tertiary text-text-secondary rounded-lg hover:text-text-primary transition-colors">Close</button>
           </div>
+        </div>
+
+        {/* Account Labels — required */}
+        <div className="space-y-2">
+          <label className="text-xs text-text-secondary font-medium">
+            Account(s) <span className="text-red">*</span>
+            <InfoButton text="Select which account(s) this trade was taken on. At least one is required." id="labels" />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {ACCOUNT_LABELS.map(label => {
+              const selected = t.labels?.includes(label);
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => {
+                    const current = t.labels || [];
+                    const next = selected ? current.filter(l => l !== label) : [...current, label];
+                    set({ labels: next as AccountLabel[] });
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    selected
+                      ? 'bg-accent/20 border-accent text-accent-hover'
+                      : 'bg-bg-tertiary border-border text-text-secondary hover:border-accent/40'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {(!t.labels || t.labels.length === 0) && (
+            <p className="text-[10px] text-red">Select at least one account</p>
+          )}
         </div>
 
         <Section title="General Information">

@@ -1,6 +1,10 @@
+export const ACCOUNT_LABELS = ['Live Account', 'Prop Phase 1', 'Prop Phase 2', 'Prop Live', 'AO Account', 'Backtest'] as const;
+export type AccountLabel = typeof ACCOUNT_LABELS[number];
+
 export interface Trade {
   id: string;
   tradeNumber: number;
+  labels: AccountLabel[];
   date: string; // YYYY-MM-DD
   pair: string;
   winLoss: '' | 'W' | 'L' | 'BE';
@@ -111,6 +115,7 @@ export function createEmptyTrade(tradeNumber: number): Trade {
   return {
     id: crypto.randomUUID(),
     tradeNumber,
+    labels: [],
     date: new Date().toISOString().slice(0, 10),
     pair: '',
     winLoss: '',

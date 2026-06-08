@@ -156,7 +156,7 @@ function migrateTrade(raw: Partial<Trade>): Trade {
   const winLoss = (wl === 'Win' ? 'W' : wl === 'Loss' ? 'L' : wl) as Trade['winLoss'];
 
   const base: Trade = {
-    id: '', tradeNumber: 0, date: '', pair: '', winLoss: '', winLossSpecifics: '', buySell: '',
+    id: '', tradeNumber: 0, labels: [], date: '', pair: '', winLoss: '', winLossSpecifics: '', buySell: '',
     risk: 0, result: 0, commissions: 0, swaps: 0,
     entryTF: '', entryPrice: 0, slPips: 0, tpPips: 0,
     entryType: '', imbalance: false, orderBlock: false, supplyZone: false, ote: false,

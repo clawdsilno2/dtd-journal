@@ -71,7 +71,7 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
           {/* Section headers row */}
           <thead>
             <tr className="bg-bg-secondary">
-              <SectionHeader label="General Information" colSpan={13} />
+              <SectionHeader label="General Information" colSpan={14} />
               <SectionHeader label="Trade Specifics" colSpan={5} />
               <SectionHeader label="Entry Specifics" colSpan={5} />
               <SectionHeader label="Time Specifics" colSpan={4} />
@@ -84,6 +84,7 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
             <tr className="bg-bg-tertiary text-text-secondary">
               {/* General Information */}
               <TH>Trade</TH>
+              <TH>Account</TH>
               <TH>Date</TH>
               <TH>Weekday</TH>
               <TH>Pair</TH>
@@ -143,7 +144,7 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
           <tbody>
             {trades.length === 0 ? (
               <tr>
-                <td colSpan={48} className="px-3 py-12 text-center text-text-secondary text-sm">
+                <td colSpan={49} className="px-3 py-12 text-center text-text-secondary text-sm">
                   No trades yet. Click "New Trade" to get started.
                 </td>
               </tr>
@@ -159,6 +160,13 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
                   >
                     {/* General Information */}
                     <TD>{t.tradeNumber}</TD>
+                    <TD>
+                      <div className="flex flex-wrap gap-0.5">
+                        {(t.labels || []).map(l => (
+                          <span key={l} className="px-1 py-0.5 rounded bg-accent/15 text-accent-hover text-[9px]">{l}</span>
+                        ))}
+                      </div>
+                    </TD>
                     <TD>{t.date}</TD>
                     <AutoTD>{getWeekday(t.date).slice(0, 3)}</AutoTD>
                     <TD className="font-medium">{t.pair}</TD>
