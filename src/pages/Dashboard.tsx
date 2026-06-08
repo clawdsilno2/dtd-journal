@@ -232,34 +232,39 @@ export default function Dashboard({ trades: allTrades, settings }: Props) {
   const equityCurve = useMemo(() => buildEquityCurve(trades, settings.startingBalance), [trades, settings]);
   const overallStats = useMemo(() => computeOverallStats(trades, settings, equityCurve), [trades, settings, equityCurve]);
 
+  const filterBar = (
+    <div className="flex items-center gap-4 flex-wrap">
+      <h2 className="text-xl font-bold">Overview</h2>
+      <div className="flex flex-wrap gap-1.5">
+        {['ALL', ...ACCOUNT_LABELS].map(label => (
+          <button
+            key={label}
+            onClick={() => setAccountFilter(label)}
+            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+              accountFilter === label
+                ? 'bg-accent/20 border-accent text-accent-hover'
+                : 'bg-bg-tertiary border-border text-text-secondary hover:border-accent/40'
+            }`}
+          >
+            {label === 'ALL' ? 'All Accounts' : label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   if (!stats) {
     return (
-      <div className="p-6 text-center text-text-secondary mt-20">
-        No trades to analyze. Add trades from the Trades page.
+      <div className="p-6 space-y-6">
+        {filterBar}
+        <p className="text-center text-text-secondary mt-10">No trades for this filter. Select a different account or add trades.</p>
       </div>
     );
   }
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4 flex-wrap">
-        <h2 className="text-xl font-bold">Overview</h2>
-        <div className="flex flex-wrap gap-1.5">
-          {['ALL', ...ACCOUNT_LABELS].map(label => (
-            <button
-              key={label}
-              onClick={() => setAccountFilter(label)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                accountFilter === label
-                  ? 'bg-accent/20 border-accent text-accent-hover'
-                  : 'bg-bg-tertiary border-border text-text-secondary hover:border-accent/40'
-              }`}
-            >
-              {label === 'ALL' ? 'All Accounts' : label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {filterBar}
 
       {/* Equity Curve + Overall Return */}
       {overallStats && (
