@@ -216,8 +216,64 @@ function AccessPrompt({ instance, onAccess, onBack }: {
   );
 }
 
+// --- Restore from GitHub backup if localStorage is empty ---
+function useRestoreFromBackup(instanceId: string) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const prefix = `dtd-${instanceId}-`;
+    const hasLocal = localStorage.getItem(`${prefix}trades-default`);
+
+    if (hasLocal) {
+      setReady(true);
+      return;
+    }
+
+    // Try to restore from backup
+    fetch(`/api/backup?id=${encodeURIComponent(instanceId)}`)
+      .then(r => { if (r.ok) return r.json(); throw new Error('no backup'); })
+      .then(data => {
+        if (data && typeof data === 'object') {
+          // Restore profiles
+          if (data.profiles) localStorage.setItem(`${prefix}profiles`, JSON.stringify(data.profiles));
+          if (data.activeProfile) localStorage.setItem(`${prefix}active-profile`, JSON.stringify(data.activeProfile));
+          // Restore per-profile trades and settings
+          for (const key of Object.keys(data)) {
+            if (key.startsWith('trades-') || key.startsWith('settings-')) {
+              localStorage.setItem(`${prefix}${key}`, JSON.stringify(data[key]));
+            }
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, [instanceId]);
+
+  return ready;
+}
+
 // --- Main journal app (with view/edit mode) ---
-function JournalApp({ instanceId, instanceName, mode, onExit }: {
+function JournalAppLoader({ instanceId, instanceName, mode, onExit }: {
+  instanceId: string;
+  instanceName: string;
+  mode: 'edit' | 'view';
+  onExit: () => void;
+}) {
+  const ready = useRestoreFromBackup(instanceId);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <p className="text-text-secondary text-sm">Loading journal...</p>
+      </div>
+    );
+  }
+
+  // Key forces remount after restore so hooks read fresh localStorage
+  return <JournalAppInner key={instanceId + '-ready'} instanceId={instanceId} instanceName={instanceName} mode={mode} onExit={onExit} />;
+}
+
+function JournalAppInner({ instanceId, instanceName, mode, onExit }: {
   instanceId: string;
   instanceName: string;
   mode: 'edit' | 'view';
@@ -323,7 +379,7 @@ export default function App() {
   }
 
   return (
-    <JournalApp
+    <JournalAppLoader
       instanceId={screen.instanceId}
       instanceName={screen.instanceName}
       mode={screen.mode}
