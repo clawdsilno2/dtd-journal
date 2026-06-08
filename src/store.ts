@@ -2,38 +2,73 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Trade, Settings } from './types';
 import { DEFAULT_SETTINGS } from './types';
 
-// --- Auto-backup to GitHub ---
+// --- Scheduled backup to GitHub (12:00 and 00:00) ---
 
-let backupTimer: ReturnType<typeof setTimeout> | null = null;
+function doBackup(instanceId: string) {
+  try {
+    const prefix = `dtd-${instanceId}-`;
+    const profiles = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
+    const activeProfile = localStorage.getItem(`${prefix}active-profile`);
+    const backup: Record<string, unknown> = { instanceId, profiles, activeProfile, backedUpAt: new Date().toISOString() };
 
-function triggerBackup(instanceId: string) {
-  if (backupTimer) clearTimeout(backupTimer);
-  backupTimer = setTimeout(() => {
-    try {
-      const prefix = `dtd-${instanceId}-`;
-      const profiles = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
-      const activeProfile = localStorage.getItem(`${prefix}active-profile`);
-      const backup: Record<string, unknown> = { instanceId, profiles, activeProfile, backedUpAt: new Date().toISOString() };
+    let totalTrades = 0;
+    for (const p of profiles) {
+      const trades = JSON.parse(localStorage.getItem(`${prefix}trades-${p.id}`) || '[]');
+      totalTrades += trades.length;
+      backup[`trades-${p.id}`] = trades;
+      backup[`settings-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}settings-${p.id}`) || 'null');
+    }
 
-      // Collect all trade data and check if there's anything to back up
-      let totalTrades = 0;
-      for (const p of profiles) {
-        const trades = JSON.parse(localStorage.getItem(`${prefix}trades-${p.id}`) || '[]');
-        totalTrades += trades.length;
-        backup[`trades-${p.id}`] = trades;
-        backup[`settings-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}settings-${p.id}`) || 'null');
-      }
+    if (totalTrades === 0) return;
 
-      // Never overwrite a backup with empty data
-      if (totalTrades === 0) return;
+    fetch('/api/backup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(backup),
+    }).catch(() => {});
+  } catch {}
+}
 
-      fetch('/api/backup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(backup),
-      }).catch(() => {});
-    } catch {}
-  }, 5000);
+// Returns the most recent 12:00 or 00:00 slot as a timestamp string (YYYY-MM-DD-HH)
+function getCurrentSlot(): string {
+  const now = new Date();
+  const h = now.getHours();
+  const slot = h >= 12 ? 12 : 0;
+  return `${now.toISOString().slice(0, 10)}-${slot}`;
+}
+
+let backupInterval: ReturnType<typeof setInterval> | null = null;
+
+function startScheduledBackup(instanceId: string) {
+  if (backupInterval) clearInterval(backupInterval);
+
+  const checkAndBackup = () => {
+    const slot = getCurrentSlot();
+    const lastSlot = localStorage.getItem(`dtd-${instanceId}-last-backup-slot`);
+    if (lastSlot === slot) return; // already backed up this slot
+
+    doBackup(instanceId);
+    localStorage.setItem(`dtd-${instanceId}-last-backup-slot`, slot);
+  };
+
+  // Check immediately (in case user opens app after a missed slot)
+  setTimeout(checkAndBackup, 3000);
+  // Then check every 5 minutes
+  backupInterval = setInterval(checkAndBackup, 5 * 60 * 1000);
+}
+
+function stopScheduledBackup() {
+  if (backupInterval) { clearInterval(backupInterval); backupInterval = null; }
+}
+
+// Also backup on first trade add (so new users get an immediate backup)
+function triggerImmediateBackup(instanceId: string) {
+  const lastSlot = localStorage.getItem(`dtd-${instanceId}-last-backup-slot`);
+  if (!lastSlot) {
+    // First ever backup for this instance — do it now
+    setTimeout(() => doBackup(instanceId), 3000);
+    localStorage.setItem(`dtd-${instanceId}-last-backup-slot`, getCurrentSlot());
+  }
 }
 
 function loadJSON<T>(key: string, fallback: T): T {
@@ -74,6 +109,12 @@ export function useProfiles(instanceId: string) {
     setProfiles(loadJSON(`${prefix}profiles`, [DEFAULT_PROFILE]));
     setActiveId(loadJSON(`${prefix}active-profile`, 'default'));
   }, [prefix]);
+
+  // Start/stop scheduled backup (12:00 and 00:00)
+  useEffect(() => {
+    if (instanceId) startScheduledBackup(instanceId);
+    return () => stopScheduledBackup();
+  }, [instanceId]);
 
   const activeProfile = profiles.find(p => p.id === activeId) || profiles[0];
 
@@ -169,7 +210,8 @@ export function useTrades(instanceId: string, profileId: string) {
   useEffect(() => {
     saveJSON(key, trades);
     if (isFirst.current) { isFirst.current = false; return; }
-    triggerBackup(instanceId);
+    // Immediate backup on first trade add (so new users don't wait 12h)
+    triggerImmediateBackup(instanceId);
   }, [key, trades, instanceId]);
 
   const addTrade = useCallback((trade: Trade) => { setTrades(prev => [...prev, trade]); }, []);
@@ -197,12 +239,9 @@ export function useSettings(instanceId: string, profileId: string) {
 
   useEffect(() => { setSettings(loadSettings(instanceId, profileId)); }, [instanceId, profileId]);
 
-  const isFirst = useRef(true);
   useEffect(() => {
     saveJSON(key, settings);
-    if (isFirst.current) { isFirst.current = false; return; }
-    triggerBackup(instanceId);
-  }, [key, settings, instanceId]);
+  }, [key, settings]);
 
   return { settings, setSettings };
 }
