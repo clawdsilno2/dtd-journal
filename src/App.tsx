@@ -222,9 +222,26 @@ function useRestoreFromBackup(instanceId: string) {
 
   useEffect(() => {
     const prefix = `dtd-${instanceId}-`;
-    const hasLocal = localStorage.getItem(`${prefix}trades-default`);
 
-    if (hasLocal) {
+    // Check if ANY local trade data exists for this instance
+    let hasLocalTrades = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(`${prefix}trades-`)) {
+        const val = localStorage.getItem(key);
+        if (val) {
+          try {
+            const arr = JSON.parse(val);
+            if (Array.isArray(arr) && arr.length > 0) {
+              hasLocalTrades = true;
+              break;
+            }
+          } catch {}
+        }
+      }
+    }
+
+    if (hasLocalTrades) {
       setReady(true);
       return;
     }
@@ -234,6 +251,12 @@ function useRestoreFromBackup(instanceId: string) {
       .then(r => { if (r.ok) return r.json(); throw new Error('no backup'); })
       .then(data => {
         if (data && typeof data === 'object') {
+          // Check backup actually has trades
+          const hasTrades = Object.keys(data).some(k =>
+            k.startsWith('trades-') && Array.isArray(data[k]) && data[k].length > 0
+          );
+          if (!hasTrades) return;
+
           // Restore profiles
           if (data.profiles) localStorage.setItem(`${prefix}profiles`, JSON.stringify(data.profiles));
           if (data.activeProfile) localStorage.setItem(`${prefix}active-profile`, JSON.stringify(data.activeProfile));

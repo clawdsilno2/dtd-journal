@@ -14,10 +14,18 @@ function triggerBackup(instanceId: string) {
       const profiles = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
       const activeProfile = localStorage.getItem(`${prefix}active-profile`);
       const backup: Record<string, unknown> = { instanceId, profiles, activeProfile, backedUpAt: new Date().toISOString() };
+
+      // Collect all trade data and check if there's anything to back up
+      let totalTrades = 0;
       for (const p of profiles) {
-        backup[`trades-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}trades-${p.id}`) || '[]');
+        const trades = JSON.parse(localStorage.getItem(`${prefix}trades-${p.id}`) || '[]');
+        totalTrades += trades.length;
+        backup[`trades-${p.id}`] = trades;
         backup[`settings-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}settings-${p.id}`) || 'null');
       }
+
+      // Never overwrite a backup with empty data
+      if (totalTrades === 0) return;
 
       fetch('/api/backup', {
         method: 'POST',
