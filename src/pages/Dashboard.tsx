@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import type { Trade, Settings } from '../types';
-import { getNetResult, getNetRR, getSession } from '../types';
+import { ACCOUNT_LABELS, getNetResult, getNetRR, getSession } from '../types';
 import { buildEquityCurve, computeOverallStats } from '../analytics';
 
 interface Props {
@@ -113,7 +113,14 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
 const QUARTER_MONTHS = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]];
 
-export default function Dashboard({ trades, settings }: Props) {
+export default function Dashboard({ trades: allTrades, settings }: Props) {
+  const [accountFilter, setAccountFilter] = useState<string>('ALL');
+
+  const trades = useMemo(() => {
+    if (accountFilter === 'ALL') return allTrades;
+    return allTrades.filter(t => (t.labels || []).includes(accountFilter as never));
+  }, [allTrades, accountFilter]);
+
   const stats = useMemo(() => {
     if (!trades.length) return null;
 
@@ -235,7 +242,24 @@ export default function Dashboard({ trades, settings }: Props) {
 
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-xl font-bold">Overview</h2>
+      <div className="flex items-center gap-4 flex-wrap">
+        <h2 className="text-xl font-bold">Overview</h2>
+        <div className="flex flex-wrap gap-1.5">
+          {['ALL', ...ACCOUNT_LABELS].map(label => (
+            <button
+              key={label}
+              onClick={() => setAccountFilter(label)}
+              className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                accountFilter === label
+                  ? 'bg-accent/20 border-accent text-accent-hover'
+                  : 'bg-bg-tertiary border-border text-text-secondary hover:border-accent/40'
+              }`}
+            >
+              {label === 'ALL' ? 'All Accounts' : label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Equity Curve + Overall Return */}
       {overallStats && (
