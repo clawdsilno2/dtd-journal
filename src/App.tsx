@@ -238,16 +238,24 @@ function useRestoreFromBackup(instanceId: string) {
         const mergedProfiles = [...profileMap.values()];
         localStorage.setItem(`${prefix}profiles`, JSON.stringify(mergedProfiles));
 
-        // Merge trades per profile: union by trade ID
+        // Merge trades per profile: union by trade ID, respecting tombstones
         for (const p of mergedProfiles) {
           const tradesKey = `${prefix}trades-${p.id}`;
+          const tombstoneKey = `${prefix}tombstones-${p.id}`;
           const localTrades: {id: string}[] = JSON.parse(localStorage.getItem(tradesKey) || '[]');
           const remoteTrades: {id: string}[] = data[`trades-${p.id}`] || [];
 
+          // Merge tombstones from both sides
+          const localTombstones: string[] = JSON.parse(localStorage.getItem(tombstoneKey) || '[]');
+          const remoteTombstones: string[] = data[`tombstones-${p.id}`] || [];
+          const allTombstones = new Set([...localTombstones, ...remoteTombstones]);
+          localStorage.setItem(tombstoneKey, JSON.stringify([...allTombstones]));
+
+          // Union trades, skip anything in tombstones
           const localIds = new Set(localTrades.map(t => t.id));
-          const merged = [...localTrades];
+          const merged = localTrades.filter(t => !allTombstones.has(t.id));
           for (const rt of remoteTrades) {
-            if (!localIds.has(rt.id)) merged.push(rt);
+            if (!localIds.has(rt.id) && !allTombstones.has(rt.id)) merged.push(rt);
           }
           localStorage.setItem(tradesKey, JSON.stringify(merged));
 

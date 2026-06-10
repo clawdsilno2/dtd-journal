@@ -17,6 +17,7 @@ function doBackup(instanceId: string) {
       totalTrades += trades.length;
       backup[`trades-${p.id}`] = trades;
       backup[`settings-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}settings-${p.id}`) || 'null');
+      backup[`tombstones-${p.id}`] = JSON.parse(localStorage.getItem(`${prefix}tombstones-${p.id}`) || '[]');
     }
 
     if (totalTrades === 0) return;
@@ -223,10 +224,17 @@ export function useTrades(instanceId: string, profileId: string) {
   }, [key, trades, instanceId]);
 
   const archiveKey = `dtd-${instanceId}-deleted-${profileId}`;
+  const tombstoneKey = `dtd-${instanceId}-tombstones-${profileId}`;
 
   const addTrade = useCallback((trade: Trade) => { setTrades(prev => [...prev, trade]); }, []);
   const updateTrade = useCallback((id: string, updates: Partial<Trade>) => { setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)); }, []);
   const deleteTrade = useCallback((id: string) => {
+    // Add to tombstones so sync doesn't bring it back
+    const tombstones = loadJSON<string[]>(tombstoneKey, []);
+    if (!tombstones.includes(id)) {
+      tombstones.push(id);
+      saveJSON(tombstoneKey, tombstones);
+    }
     setTrades(prev => {
       const trade = prev.find(t => t.id === id);
       if (trade) {
@@ -236,7 +244,7 @@ export function useTrades(instanceId: string, profileId: string) {
       }
       return prev.filter(t => t.id !== id);
     });
-  }, [archiveKey]);
+  }, [archiveKey, tombstoneKey]);
 
   const getDeletedTrades = useCallback(() => loadJSON<Trade[]>(archiveKey, []), [archiveKey]);
 
@@ -245,9 +253,12 @@ export function useTrades(instanceId: string, profileId: string) {
     const trade = archived.find(t => t.id === id);
     if (trade) {
       saveJSON(archiveKey, archived.filter(t => t.id !== id));
+      // Remove from tombstones
+      const tombstones = loadJSON<string[]>(tombstoneKey, []);
+      saveJSON(tombstoneKey, tombstones.filter(tid => tid !== id));
       setTrades(prev => [...prev, trade]);
     }
-  }, [archiveKey]);
+  }, [archiveKey, tombstoneKey]);
 
   return { trades, setTrades, addTrade, updateTrade, deleteTrade, getDeletedTrades, restoreTrade };
 }
