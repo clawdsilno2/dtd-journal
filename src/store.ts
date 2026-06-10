@@ -61,15 +61,6 @@ function stopScheduledBackup() {
   if (backupInterval) { clearInterval(backupInterval); backupInterval = null; }
 }
 
-// Also backup on first trade add (so new users get an immediate backup)
-function triggerImmediateBackup(instanceId: string) {
-  const lastSlot = localStorage.getItem(`dtd-${instanceId}-last-backup-slot`);
-  if (!lastSlot) {
-    // First ever backup for this instance — do it now
-    setTimeout(() => doBackup(instanceId), 3000);
-    localStorage.setItem(`dtd-${instanceId}-last-backup-slot`, getCurrentSlot());
-  }
-}
 
 function loadJSON<T>(key: string, fallback: T): T {
   try {
@@ -93,8 +84,52 @@ export interface Profile {
 
 const DEFAULT_PROFILE: Profile = { id: 'default', name: 'My Journal' };
 
+// Sync from GitHub on load — merge remote data into localStorage
+async function syncFromRemote(instanceId: string) {
+  try {
+    const res = await fetch(`/api/backup?id=${instanceId}`);
+    if (!res.ok) return;
+    const remote = await res.json();
+    if (!remote || typeof remote !== 'object') return;
+
+    const prefix = `dtd-${instanceId}-`;
+
+    // Merge profiles: use whichever has more profiles
+    const localProfiles = loadJSON<Profile[]>(`${prefix}profiles`, [DEFAULT_PROFILE]);
+    const remoteProfiles: Profile[] = remote.profiles || [];
+    if (remoteProfiles.length > localProfiles.length) {
+      saveJSON(`${prefix}profiles`, remoteProfiles);
+    }
+
+    // Merge trades per profile: use whichever has more trades (simple last-write-wins)
+    const allProfiles = remoteProfiles.length >= localProfiles.length ? remoteProfiles : localProfiles;
+    for (const p of allProfiles) {
+      const localKey = `${prefix}trades-${p.id}`;
+      const localTrades = loadJSON<unknown[]>(localKey, []);
+      const remoteTrades: unknown[] = remote[`trades-${p.id}`] || [];
+
+      if (remoteTrades.length > localTrades.length) {
+        saveJSON(localKey, remoteTrades);
+      }
+
+      // Also sync settings if local is empty
+      const settingsKey = `${prefix}settings-${p.id}`;
+      const localSettings = localStorage.getItem(settingsKey);
+      const remoteSettings = remote[`settings-${p.id}`];
+      if (!localSettings && remoteSettings) {
+        saveJSON(settingsKey, remoteSettings);
+      }
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useProfiles(instanceId: string) {
   const prefix = `dtd-${instanceId}-`;
+  const [, setSynced] = useState(false);
 
   const [profiles, setProfiles] = useState<Profile[]>(() =>
     loadJSON(`${prefix}profiles`, [DEFAULT_PROFILE])
@@ -110,11 +145,19 @@ export function useProfiles(instanceId: string) {
     setActiveId(loadJSON(`${prefix}active-profile`, 'default'));
   }, [prefix]);
 
-  // Start/stop scheduled backup (12:00 and 00:00)
+  // Sync from remote on load, then start scheduled backup
   useEffect(() => {
-    if (instanceId) startScheduledBackup(instanceId);
+    if (!instanceId) return;
+    syncFromRemote(instanceId).then(() => {
+      // Reload state after sync
+      setProfiles(loadJSON(`${prefix}profiles`, [DEFAULT_PROFILE]));
+      setActiveId(loadJSON(`${prefix}active-profile`, 'default'));
+      setSynced(true);
+      window.dispatchEvent(new Event('dtd-synced'));
+      startScheduledBackup(instanceId);
+    });
     return () => stopScheduledBackup();
-  }, [instanceId]);
+  }, [instanceId, prefix]);
 
   const activeProfile = profiles.find(p => p.id === activeId) || profiles[0];
 
@@ -206,12 +249,19 @@ export function useTrades(instanceId: string, profileId: string) {
 
   useEffect(() => { setTrades(loadTrades(instanceId, profileId)); }, [instanceId, profileId]);
 
+  // Re-read from localStorage when sync completes
+  useEffect(() => {
+    const handler = () => setTrades(loadTrades(instanceId, profileId));
+    window.addEventListener('dtd-synced', handler);
+    return () => window.removeEventListener('dtd-synced', handler);
+  }, [instanceId, profileId]);
+
   const isFirst = useRef(true);
   useEffect(() => {
     saveJSON(key, trades);
     if (isFirst.current) { isFirst.current = false; return; }
-    // Immediate backup on first trade add (so new users don't wait 12h)
-    triggerImmediateBackup(instanceId);
+    // Backup after every change so other devices can sync
+    doBackup(instanceId);
   }, [key, trades, instanceId]);
 
   const archiveKey = `dtd-${instanceId}-deleted-${profileId}`;
