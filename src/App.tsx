@@ -216,7 +216,7 @@ function AccessPrompt({ instance, onAccess, onBack }: {
   );
 }
 
-// --- Sync from GitHub backup on load (always merges, more trades wins) ---
+// --- Sync from GitHub backup on load (merge by trade ID — always adds missing trades) ---
 function useRestoreFromBackup(instanceId: string) {
   const [ready, setReady] = useState(false);
 
@@ -228,23 +228,30 @@ function useRestoreFromBackup(instanceId: string) {
       .then(data => {
         if (!data || typeof data !== 'object') return;
 
-        // Merge profiles
-        const localProfiles = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
-        const remoteProfiles = data.profiles || [];
-        if (remoteProfiles.length >= localProfiles.length) {
-          localStorage.setItem(`${prefix}profiles`, JSON.stringify(remoteProfiles));
+        // Merge profiles: union by ID
+        const localProfiles: {id: string; name: string}[] = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
+        const remoteProfiles: {id: string; name: string}[] = data.profiles || [];
+        const profileMap = new Map(localProfiles.map(p => [p.id, p]));
+        for (const p of remoteProfiles) {
+          if (!profileMap.has(p.id)) profileMap.set(p.id, p);
         }
+        const mergedProfiles = [...profileMap.values()];
+        localStorage.setItem(`${prefix}profiles`, JSON.stringify(mergedProfiles));
 
-        // Merge trades and settings per profile — more trades wins
-        const allProfiles = remoteProfiles.length >= localProfiles.length ? remoteProfiles : localProfiles;
-        for (const p of allProfiles) {
+        // Merge trades per profile: union by trade ID
+        for (const p of mergedProfiles) {
           const tradesKey = `${prefix}trades-${p.id}`;
-          const localTrades = JSON.parse(localStorage.getItem(tradesKey) || '[]');
-          const remoteTrades = data[`trades-${p.id}`] || [];
-          if (remoteTrades.length > localTrades.length) {
-            localStorage.setItem(tradesKey, JSON.stringify(remoteTrades));
-          }
+          const localTrades: {id: string}[] = JSON.parse(localStorage.getItem(tradesKey) || '[]');
+          const remoteTrades: {id: string}[] = data[`trades-${p.id}`] || [];
 
+          const localIds = new Set(localTrades.map(t => t.id));
+          const merged = [...localTrades];
+          for (const rt of remoteTrades) {
+            if (!localIds.has(rt.id)) merged.push(rt);
+          }
+          localStorage.setItem(tradesKey, JSON.stringify(merged));
+
+          // Sync settings if local is empty
           const settingsKey = `${prefix}settings-${p.id}`;
           const remoteSettings = data[`settings-${p.id}`];
           if (remoteSettings && !localStorage.getItem(settingsKey)) {
