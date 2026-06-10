@@ -216,60 +216,47 @@ function AccessPrompt({ instance, onAccess, onBack }: {
   );
 }
 
-// --- Restore from GitHub backup if localStorage is empty ---
+// --- Sync from GitHub backup on load (always merges, more trades wins) ---
 function useRestoreFromBackup(instanceId: string) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const prefix = `dtd-${instanceId}-`;
 
-    // Check if ANY local trade data exists for this instance
-    let hasLocalTrades = false;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith(`${prefix}trades-`)) {
-        const val = localStorage.getItem(key);
-        if (val) {
-          try {
-            const arr = JSON.parse(val);
-            if (Array.isArray(arr) && arr.length > 0) {
-              hasLocalTrades = true;
-              break;
-            }
-          } catch {}
-        }
-      }
-    }
-
-    if (hasLocalTrades) {
-      setReady(true);
-      return;
-    }
-
-    // Try to restore from backup
     fetch(`/api/backup?id=${encodeURIComponent(instanceId)}`)
       .then(r => { if (r.ok) return r.json(); throw new Error('no backup'); })
       .then(data => {
-        if (data && typeof data === 'object') {
-          // Check backup actually has trades
-          const hasTrades = Object.keys(data).some(k =>
-            k.startsWith('trades-') && Array.isArray(data[k]) && data[k].length > 0
-          );
-          if (!hasTrades) return;
+        if (!data || typeof data !== 'object') return;
 
-          // Restore profiles
-          if (data.profiles) localStorage.setItem(`${prefix}profiles`, JSON.stringify(data.profiles));
-          if (data.activeProfile) localStorage.setItem(`${prefix}active-profile`, JSON.stringify(data.activeProfile));
-          // Restore per-profile trades and settings
-          for (const key of Object.keys(data)) {
-            if (key.startsWith('trades-') || key.startsWith('settings-')) {
-              localStorage.setItem(`${prefix}${key}`, JSON.stringify(data[key]));
-            }
+        // Merge profiles
+        const localProfiles = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
+        const remoteProfiles = data.profiles || [];
+        if (remoteProfiles.length >= localProfiles.length) {
+          localStorage.setItem(`${prefix}profiles`, JSON.stringify(remoteProfiles));
+        }
+
+        // Merge trades and settings per profile — more trades wins
+        const allProfiles = remoteProfiles.length >= localProfiles.length ? remoteProfiles : localProfiles;
+        for (const p of allProfiles) {
+          const tradesKey = `${prefix}trades-${p.id}`;
+          const localTrades = JSON.parse(localStorage.getItem(tradesKey) || '[]');
+          const remoteTrades = data[`trades-${p.id}`] || [];
+          if (remoteTrades.length > localTrades.length) {
+            localStorage.setItem(tradesKey, JSON.stringify(remoteTrades));
+          }
+
+          const settingsKey = `${prefix}settings-${p.id}`;
+          const remoteSettings = data[`settings-${p.id}`];
+          if (remoteSettings && !localStorage.getItem(settingsKey)) {
+            localStorage.setItem(settingsKey, JSON.stringify(remoteSettings));
           }
         }
       })
       .catch(() => {})
-      .finally(() => setReady(true));
+      .finally(() => {
+        window.dispatchEvent(new Event('dtd-synced'));
+        setReady(true);
+      });
   }, [instanceId]);
 
   return ready;

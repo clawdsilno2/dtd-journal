@@ -84,52 +84,8 @@ export interface Profile {
 
 const DEFAULT_PROFILE: Profile = { id: 'default', name: 'My Journal' };
 
-// Sync from GitHub on load — merge remote data into localStorage
-async function syncFromRemote(instanceId: string) {
-  try {
-    const res = await fetch(`/api/backup?id=${instanceId}`);
-    if (!res.ok) return;
-    const remote = await res.json();
-    if (!remote || typeof remote !== 'object') return;
-
-    const prefix = `dtd-${instanceId}-`;
-
-    // Merge profiles: use whichever has more profiles
-    const localProfiles = loadJSON<Profile[]>(`${prefix}profiles`, [DEFAULT_PROFILE]);
-    const remoteProfiles: Profile[] = remote.profiles || [];
-    if (remoteProfiles.length > localProfiles.length) {
-      saveJSON(`${prefix}profiles`, remoteProfiles);
-    }
-
-    // Merge trades per profile: use whichever has more trades (simple last-write-wins)
-    const allProfiles = remoteProfiles.length >= localProfiles.length ? remoteProfiles : localProfiles;
-    for (const p of allProfiles) {
-      const localKey = `${prefix}trades-${p.id}`;
-      const localTrades = loadJSON<unknown[]>(localKey, []);
-      const remoteTrades: unknown[] = remote[`trades-${p.id}`] || [];
-
-      if (remoteTrades.length > localTrades.length) {
-        saveJSON(localKey, remoteTrades);
-      }
-
-      // Also sync settings if local is empty
-      const settingsKey = `${prefix}settings-${p.id}`;
-      const localSettings = localStorage.getItem(settingsKey);
-      const remoteSettings = remote[`settings-${p.id}`];
-      if (!localSettings && remoteSettings) {
-        saveJSON(settingsKey, remoteSettings);
-      }
-    }
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function useProfiles(instanceId: string) {
   const prefix = `dtd-${instanceId}-`;
-  const [, setSynced] = useState(false);
 
   const [profiles, setProfiles] = useState<Profile[]>(() =>
     loadJSON(`${prefix}profiles`, [DEFAULT_PROFILE])
@@ -145,19 +101,21 @@ export function useProfiles(instanceId: string) {
     setActiveId(loadJSON(`${prefix}active-profile`, 'default'));
   }, [prefix]);
 
-  // Sync from remote on load, then start scheduled backup
+  // Reload after sync completes (triggered by App.tsx useRestoreFromBackup)
   useEffect(() => {
-    if (!instanceId) return;
-    syncFromRemote(instanceId).then(() => {
-      // Reload state after sync
+    const handler = () => {
       setProfiles(loadJSON(`${prefix}profiles`, [DEFAULT_PROFILE]));
       setActiveId(loadJSON(`${prefix}active-profile`, 'default'));
-      setSynced(true);
-      window.dispatchEvent(new Event('dtd-synced'));
-      startScheduledBackup(instanceId);
-    });
+    };
+    window.addEventListener('dtd-synced', handler);
+    return () => window.removeEventListener('dtd-synced', handler);
+  }, [prefix]);
+
+  // Start scheduled backup
+  useEffect(() => {
+    if (instanceId) startScheduledBackup(instanceId);
     return () => stopScheduledBackup();
-  }, [instanceId, prefix]);
+  }, [instanceId]);
 
   const activeProfile = profiles.find(p => p.id === activeId) || profiles[0];
 
