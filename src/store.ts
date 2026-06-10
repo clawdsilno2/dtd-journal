@@ -214,11 +214,34 @@ export function useTrades(instanceId: string, profileId: string) {
     triggerImmediateBackup(instanceId);
   }, [key, trades, instanceId]);
 
+  const archiveKey = `dtd-${instanceId}-deleted-${profileId}`;
+
   const addTrade = useCallback((trade: Trade) => { setTrades(prev => [...prev, trade]); }, []);
   const updateTrade = useCallback((id: string, updates: Partial<Trade>) => { setTrades(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t)); }, []);
-  const deleteTrade = useCallback((id: string) => { setTrades(prev => prev.filter(t => t.id !== id)); }, []);
+  const deleteTrade = useCallback((id: string) => {
+    setTrades(prev => {
+      const trade = prev.find(t => t.id === id);
+      if (trade) {
+        const archived = loadJSON<Trade[]>(archiveKey, []);
+        archived.push(trade);
+        saveJSON(archiveKey, archived.slice(-3));
+      }
+      return prev.filter(t => t.id !== id);
+    });
+  }, [archiveKey]);
 
-  return { trades, setTrades, addTrade, updateTrade, deleteTrade };
+  const getDeletedTrades = useCallback(() => loadJSON<Trade[]>(archiveKey, []), [archiveKey]);
+
+  const restoreTrade = useCallback((id: string) => {
+    const archived = loadJSON<Trade[]>(archiveKey, []);
+    const trade = archived.find(t => t.id === id);
+    if (trade) {
+      saveJSON(archiveKey, archived.filter(t => t.id !== id));
+      setTrades(prev => [...prev, trade]);
+    }
+  }, [archiveKey]);
+
+  return { trades, setTrades, addTrade, updateTrade, deleteTrade, getDeletedTrades, restoreTrade };
 }
 
 function mergeSettings(stored: Partial<Settings> | null, defaults: Settings): Settings {

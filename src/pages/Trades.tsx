@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, RotateCcw } from 'lucide-react';
 import type { Trade, Settings } from '../types';
 import { createEmptyTrade, getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession } from '../types';
 import TradeForm from '../components/TradeForm';
@@ -10,6 +10,8 @@ interface Props {
   addTrade?: (t: Trade) => void;
   updateTrade?: (id: string, updates: Partial<Trade>) => void;
   deleteTrade?: (id: string) => void;
+  getDeletedTrades?: () => Trade[];
+  restoreTrade?: (id: string) => void;
   viewOnly?: boolean;
 }
 
@@ -34,8 +36,9 @@ function BoolTD({ value }: { value: boolean }) {
   return <TD>{value ? 'X' : ''}</TD>;
 }
 
-export default function Trades({ trades, settings, addTrade, updateTrade, deleteTrade, viewOnly }: Props) {
+export default function Trades({ trades, settings, addTrade, updateTrade, deleteTrade, getDeletedTrades, restoreTrade, viewOnly }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
+  const [showArchive, setShowArchive] = useState(false);
 
   const handleAdd = () => {
     if (!addTrade) return;
@@ -57,14 +60,43 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Trade Log</h2>
         {!viewOnly && (
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
-          >
-            <Plus size={16} /> New Trade
-          </button>
+          <div className="flex items-center gap-2">
+            {getDeletedTrades && getDeletedTrades().length > 0 && (
+              <button
+                onClick={() => setShowArchive(!showArchive)}
+                className="flex items-center gap-2 px-4 py-2 bg-bg-tertiary text-text-secondary rounded-lg text-sm font-medium hover:text-accent transition-colors"
+              >
+                <RotateCcw size={16} /> Restore ({getDeletedTrades().length})
+              </button>
+            )}
+            <button
+              onClick={handleAdd}
+              className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors"
+            >
+              <Plus size={16} /> New Trade
+            </button>
+          </div>
         )}
       </div>
+
+      {showArchive && getDeletedTrades && restoreTrade && (
+        <div className="mb-4 p-3 bg-bg-secondary rounded-lg border border-border">
+          <h3 className="text-sm font-semibold text-text-secondary mb-2">Recently Deleted (max 3)</h3>
+          <div className="space-y-2">
+            {getDeletedTrades().map(t => (
+              <div key={t.id} className="flex items-center justify-between text-xs bg-bg-primary rounded px-3 py-2">
+                <span>#{t.tradeNumber} — {t.pair} {t.buySell} {t.date} {t.entryTime}</span>
+                <button
+                  onClick={() => { restoreTrade(t.id); if (getDeletedTrades().length <= 1) setShowArchive(false); }}
+                  className="text-accent hover:text-accent-hover transition-colors text-xs font-medium"
+                >
+                  Restore
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="text-xs border-collapse">

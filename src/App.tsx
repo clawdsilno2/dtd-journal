@@ -303,7 +303,7 @@ function JournalAppInner({ instanceId, instanceName, mode, onExit }: {
   onExit: () => void;
 }) {
   const { profiles, activeProfile, activeId, setActiveId, createProfile, deleteProfile, renameProfile } = useProfiles(instanceId);
-  const { trades, addTrade, updateTrade, deleteTrade } = useTrades(instanceId, activeId);
+  const { trades, addTrade, updateTrade, deleteTrade, getDeletedTrades, restoreTrade } = useTrades(instanceId, activeId);
   const { settings, setSettings } = useSettings(instanceId, activeId);
 
   const isView = mode === 'view';
@@ -334,6 +334,8 @@ function JournalAppInner({ instanceId, instanceName, mode, onExit }: {
               addTrade={isView ? undefined : addTrade}
               updateTrade={isView ? undefined : updateTrade}
               deleteTrade={isView ? undefined : deleteTrade}
+              getDeletedTrades={isView ? undefined : getDeletedTrades}
+              restoreTrade={isView ? undefined : restoreTrade}
               viewOnly={isView}
             />
           } />
