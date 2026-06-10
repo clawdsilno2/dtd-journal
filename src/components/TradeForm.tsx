@@ -232,8 +232,11 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
         </Section>
 
         <Section title="Exit Specifics">
-          <Field label="P1" info="First partial — the price level or pip amount where you took your first partial profit.">
-            <input type="number" step="0.01" value={t.p1 || ''} onChange={e => set({ p1: +e.target.value })} />
+          <Field label="P1" info="First partial — what price structure was targeted for the first partial.">
+            <select value={t.p1} onChange={e => set({ p1: e.target.value })}>
+              <option value="">--</option>
+              {settings.partialOptions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
           </Field>
           <Field label="AR StDev" info="Asia Range Standard Deviation at P1. Measures partial points relative to the Asia Range for different volatility conditions.">
             <select value={t.arStdev1} onChange={e => set({ arStdev1: e.target.value })}>
@@ -241,8 +244,11 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
               {settings.arStDevOptions.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
           </Field>
-          <Field label="P2" info="Second partial — the price level or pip amount where you took your second partial.">
-            <input type="number" step="0.01" value={t.p2 || ''} onChange={e => set({ p2: +e.target.value })} />
+          <Field label="P2" info="Second partial — what price structure was targeted for the second partial.">
+            <select value={t.p2} onChange={e => set({ p2: e.target.value })}>
+              <option value="">--</option>
+              {settings.partialOptions.map(v => <option key={v} value={v}>{v}</option>)}
+            </select>
           </Field>
           <Field label="AR StDev" info="Asia Range Standard Deviation at P2.">
             <select value={t.arStdev2} onChange={e => set({ arStdev2: e.target.value })}>

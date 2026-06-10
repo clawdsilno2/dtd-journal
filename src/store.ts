@@ -163,7 +163,7 @@ function migrateTrade(raw: Partial<Trade>): Trade {
     entryTF: '', entryPrice: 0, slPips: 0, tpPips: 0,
     entryType: '', imbalance: false, orderBlock: false, supplyZone: false, ote: false,
     entryTime: '', exitTime: '', mfpPips: 0, mapPips: 0,
-    p1: 0, arStdev1: '', p2: 0, arStdev2: '', fullPosOut: '', furtherPartials: '', exitNotes: '',
+    p1: '', arStdev1: '', p2: '', arStdev2: '', fullPosOut: '', furtherPartials: '', exitNotes: '',
     weeklyBias: '', dailyBias: '', h4Bias: '', h1Bias: '',
     protraction: '', lqSweep: '', marketShift: '', divergence: '', divergencePosNeg: '', highLow: '',
     tradeNotes: '', emotions: '', keyNotes: '',

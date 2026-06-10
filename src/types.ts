@@ -32,9 +32,9 @@ export interface Trade {
   mfpPips: number;
   mapPips: number;
   // Exit Specifics
-  p1: number;
+  p1: string;
   arStdev1: string;
-  p2: number;
+  p2: string;
   arStdev2: string;
   fullPosOut: string;
   furtherPartials: string;
@@ -83,6 +83,7 @@ export interface Settings {
   protractionOptions: string[];
   highLowOptions: string[];
   arStDevOptions: string[];
+  partialOptions: string[];
   fullPosOutOptions: string[];
 }
 
@@ -108,6 +109,7 @@ export const DEFAULT_SETTINGS: Settings = {
   protractionOptions: ['0-SD', '1-SD', '2-SD'],
   highLowOptions: ['Protected', 'Unprotected'],
   arStDevOptions: ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5', '5.5', '6', '6.5', '7', '7.5'],
+  partialOptions: ['Imbalance', 'PWL/PWH', 'PDL/PDH', 'BSL/SSL', 'External+', 'BPR', 'OB', 'HL', 'AS H/L', 'LG', 'NY H/L'],
   fullPosOutOptions: ['Full TP', 'P + Full TP', 'P + BE', 'P + Trailed SL', 'BE', 'Full SL', 'P + SL', 'Manual Exit'],
 };
 
@@ -138,9 +140,9 @@ export function createEmptyTrade(tradeNumber: number): Trade {
     exitTime: '',
     mfpPips: 0,
     mapPips: 0,
-    p1: 0,
+    p1: '',
     arStdev1: '',
-    p2: 0,
+    p2: '',
     arStdev2: '',
     fullPosOut: '',
     furtherPartials: '',

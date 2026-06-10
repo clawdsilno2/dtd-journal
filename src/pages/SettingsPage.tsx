@@ -33,7 +33,7 @@ export default function SettingsPage({ settings, setSettings, viewOnly }: Props)
     update({ sessions: settings.sessions.filter((_, i) => i !== index) });
   };
 
-  type ListKey = 'pairs' | 'entryTypes' | 'tfOptions' | 'htfBiasOptions' | 'h1BiasOptions' | 'divergenceOptions' | 'protractionOptions' | 'highLowOptions' | 'arStDevOptions' | 'fullPosOutOptions';
+  type ListKey = 'pairs' | 'entryTypes' | 'tfOptions' | 'htfBiasOptions' | 'h1BiasOptions' | 'divergenceOptions' | 'protractionOptions' | 'highLowOptions' | 'arStDevOptions' | 'partialOptions' | 'fullPosOutOptions';
 
   const updateList = (key: ListKey, index: number, value: string) => {
     const list = [...settings[key]];
@@ -126,6 +126,7 @@ export default function SettingsPage({ settings, setSettings, viewOnly }: Props)
           <ListEditor label="Divergence" listKey="divergenceOptions" />
           <ListEditor label="Protraction" listKey="protractionOptions" />
           <ListEditor label="High/Low" listKey="highLowOptions" />
+          <ListEditor label="Partial Targets" listKey="partialOptions" />
           <ListEditor label="Full Pos. Out" listKey="fullPosOutOptions" />
         </div>
       </SectionBlock>
