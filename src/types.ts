@@ -31,6 +31,14 @@ export interface Trade {
   // MAP/MFP
   mfpPips: number;
   mapPips: number;
+  // SL Specifics
+  slPda: string;
+  slPdaX: string;
+  slPdaSpecifics: string;
+  // Expiry Range
+  totalCbdr: number;
+  totalAr: number;
+  totalExpiryR: number;
   // Exit Specifics
   p1: string;
   arStdev1: string;
@@ -140,6 +148,12 @@ export function createEmptyTrade(tradeNumber: number): Trade {
     exitTime: '',
     mfpPips: 0,
     mapPips: 0,
+    slPda: '',
+    slPdaX: '',
+    slPdaSpecifics: '',
+    totalCbdr: 0,
+    totalAr: 0,
+    totalExpiryR: 0,
     p1: '',
     arStdev1: '',
     p2: '',

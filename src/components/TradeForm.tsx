@@ -231,6 +231,30 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
           <Field label="MAP (%)" computed={getMapPercent(t).toFixed(1) + '%'} info="Auto-calculated: MAP pips / SL pips. 100% means price hit your SL exactly." />
         </Section>
 
+        <Section title="SL Specifics">
+          <Field label="#PDA" info="Number of Premium/Discount Arrays at the stop loss level.">
+            <input value={t.slPda} onChange={e => set({ slPda: e.target.value })} />
+          </Field>
+          <Field label="#PDA (x)" info="Number of PDA confluences at the stop loss level.">
+            <input value={t.slPdaX} onChange={e => set({ slPdaX: e.target.value })} />
+          </Field>
+          <Field label="PDA Specifics" info="Details about the specific PDAs at the stop loss level.">
+            <input value={t.slPdaSpecifics} onChange={e => set({ slPdaSpecifics: e.target.value })} />
+          </Field>
+        </Section>
+
+        <Section title="Expiry Range">
+          <Field label="Total CBDR" info="Total Central Bank Dealers Range. CBDR: 2pm-8pm NY.">
+            <input type="number" step="0.1" value={t.totalCbdr || ''} onChange={e => set({ totalCbdr: +e.target.value })} />
+          </Field>
+          <Field label="Total AR" info="Total Asian Range (8pm-MNOP NY).">
+            <input type="number" step="0.1" value={t.totalAr || ''} onChange={e => set({ totalAr: +e.target.value })} />
+          </Field>
+          <Field label="Total Expiry R" info="Total Expiry Range.">
+            <input type="number" step="0.1" value={t.totalExpiryR || ''} onChange={e => set({ totalExpiryR: +e.target.value })} />
+          </Field>
+        </Section>
+
         <Section title="Exit Specifics">
           <Field label="P1" info="First partial — what price structure was targeted for the first partial.">
             <select value={t.p1} onChange={e => set({ p1: e.target.value })}>
