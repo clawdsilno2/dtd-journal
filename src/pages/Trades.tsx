@@ -108,9 +108,13 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
               <SectionHeader label="Entry Specifics" colSpan={5} />
               <SectionHeader label="Time Specifics" colSpan={4} />
               <SectionHeader label="MAP/MFP" colSpan={4} />
+              <SectionHeader label="SL Specifics" colSpan={3} />
+              <SectionHeader label="Expiry Range" colSpan={3} />
               <SectionHeader label="Exit Specifics" colSpan={7} />
               <SectionHeader label="Market Sentiment" colSpan={4} />
               <SectionHeader label="Narrative" colSpan={6} />
+              <SectionHeader label="Notes" colSpan={3} />
+              <SectionHeader label="Screenshots" colSpan={6} />
             </tr>
             {/* Column headers */}
             <tr className="bg-bg-tertiary text-text-secondary">
@@ -151,6 +155,14 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
               <TH>MFP (%)</TH>
               <TH>MAP (pips)</TH>
               <TH>MAP (%)</TH>
+              {/* SL Specifics */}
+              <TH>#PDA</TH>
+              <TH>#PDA (x)</TH>
+              <TH>PDA Spec.</TH>
+              {/* Expiry Range */}
+              <TH>CBDR</TH>
+              <TH>AR</TH>
+              <TH>Expiry R</TH>
               {/* Exit Specifics */}
               <TH>P1</TH>
               <TH>AR StDev</TH>
@@ -171,6 +183,17 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
               <TH>Divergence</TH>
               <TH>Div (+/-)</TH>
               <TH>High/Low</TH>
+              {/* Notes */}
+              <TH>Trade Notes</TH>
+              <TH>Emotions</TH>
+              <TH>Key Notes</TH>
+              {/* Screenshots */}
+              <TH>Flow</TH>
+              <TH>Flux</TH>
+              <TH>ETF</TH>
+              <TH>DXY Flow</TH>
+              <TH>DXY Flux</TH>
+              <TH>DXY ETF</TH>
             </tr>
           </thead>
           <tbody>
@@ -244,6 +267,14 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
                     <AutoTD className="font-mono">{t.tpPips ? getMfpPercent(t).toFixed(1) + '%' : ''}</AutoTD>
                     <TD className="font-mono">{t.mapPips || ''}</TD>
                     <AutoTD className="font-mono">{t.slPips ? getMapPercent(t).toFixed(1) + '%' : ''}</AutoTD>
+                    {/* SL Specifics */}
+                    <TD>{t.slPda || ''}</TD>
+                    <TD>{t.slPdaX || ''}</TD>
+                    <TD className="max-w-[100px] truncate">{t.slPdaSpecifics || ''}</TD>
+                    {/* Expiry Range */}
+                    <TD className="font-mono">{t.totalCbdr || ''}</TD>
+                    <TD className="font-mono">{t.totalAr || ''}</TD>
+                    <TD className="font-mono">{t.totalExpiryR || ''}</TD>
                     {/* Exit Specifics */}
                     <TD className="font-mono">{t.p1 || ''}</TD>
                     <TD>{t.arStdev1}</TD>
@@ -264,6 +295,17 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
                     <TD>{t.divergence}</TD>
                     <TD>{t.divergencePosNeg}</TD>
                     <TD>{t.highLow}</TD>
+                    {/* Notes */}
+                    <TD className="max-w-[150px] truncate">{t.tradeNotes}</TD>
+                    <TD className="max-w-[100px] truncate">{t.emotions}</TD>
+                    <TD className="max-w-[100px] truncate">{t.keyNotes}</TD>
+                    {/* Screenshots */}
+                    <TD>{t.tradeLinkFlow ? <a href={t.tradeLinkFlow} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>
+                    <TD>{t.tradeLinkFlux ? <a href={t.tradeLinkFlux} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>
+                    <TD>{t.tradeLinkETF ? <a href={t.tradeLinkETF} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>
+                    <TD>{t.dxyLinkFlow ? <a href={t.dxyLinkFlow} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>
+                    <TD>{t.dxyLinkFlux ? <a href={t.dxyLinkFlux} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>
+                    <TD>{t.dxyLinkETF ? <a href={t.dxyLinkETF} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>
                   </tr>
                 );
               })
