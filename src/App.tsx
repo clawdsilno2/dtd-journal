@@ -228,14 +228,17 @@ function useRestoreFromBackup(instanceId: string) {
       .then(data => {
         if (!data || typeof data !== 'object') return;
 
-        // Merge profiles: union by ID
+        // Merge profiles: union by ID, always keep at least the default
         const localProfiles: {id: string; name: string}[] = JSON.parse(localStorage.getItem(`${prefix}profiles`) || '[]');
         const remoteProfiles: {id: string; name: string}[] = data.profiles || [];
         const profileMap = new Map(localProfiles.map(p => [p.id, p]));
         for (const p of remoteProfiles) {
           if (!profileMap.has(p.id)) profileMap.set(p.id, p);
         }
-        const mergedProfiles = [...profileMap.values()];
+        let mergedProfiles = [...profileMap.values()];
+        if (mergedProfiles.length === 0) {
+          mergedProfiles = [{ id: 'default', name: 'My Journal' }];
+        }
         localStorage.setItem(`${prefix}profiles`, JSON.stringify(mergedProfiles));
 
         // Merge trades per profile: union by trade ID, respecting tombstones
