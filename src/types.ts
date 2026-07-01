@@ -1,4 +1,4 @@
-export const ACCOUNT_LABELS = ['Live Account', 'Prop Phase 1', 'Prop Phase 2', 'Prop Live', 'AO Account', 'Backtest'] as const;
+export const ACCOUNT_LABELS = ['Live Account', 'Prop Phase 1', 'Prop Phase 2', 'Prop Live', 'AO Account', 'Backtest Good', 'Backtest Trial'] as const;
 export type AccountLabel = typeof ACCOUNT_LABELS[number];
 
 export interface Trade {
