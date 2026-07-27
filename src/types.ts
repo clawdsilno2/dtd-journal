@@ -7,7 +7,7 @@ export interface Trade {
   labels: AccountLabel[];
   date: string; // YYYY-MM-DD
   pair: string;
-  winLoss: '' | 'W' | 'L' | 'BE';
+  winLoss: '' | 'W' | 'L' | 'BE' | 'No Tag' | 'Missed';
   winLossSpecifics: string;
   buySell: '' | 'Buy' | 'Sell';
   risk: number;

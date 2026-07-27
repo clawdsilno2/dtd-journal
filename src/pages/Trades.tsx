@@ -230,6 +230,8 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
                         t.winLoss === 'W' ? 'bg-green/20 text-green' :
                         t.winLoss === 'L' ? 'bg-red/20 text-red' :
                         t.winLoss === 'BE' ? 'bg-yellow/20 text-yellow' :
+                        t.winLoss === 'Missed' ? 'bg-purple/20 text-purple' :
+                        t.winLoss === 'No Tag' ? 'bg-gray/20 text-text-secondary' :
                         'text-text-secondary'
                       }`}>{t.winLoss || '--'}</span>
                     </TD>

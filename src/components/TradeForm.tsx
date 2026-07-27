@@ -129,6 +129,8 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
               <option value="W">W</option>
               <option value="L">L</option>
               <option value="BE">BE</option>
+              <option value="No Tag">No Tag</option>
+              <option value="Missed">Missed</option>
             </select>
           </Field>
           <Field label="W/L Specifics" info="More detail on the outcome. P = Partial (e.g. Partial Win, Partial Loss).">
