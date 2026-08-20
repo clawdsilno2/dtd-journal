@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import type { Trade, Settings, AccountLabel } from '../types';
-import { ACCOUNT_LABELS, getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession } from '../types';
+import { ACCOUNT_LABELS, getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession, getDseEntry } from '../types';
 
 interface Props {
   trade: Trade;
@@ -330,15 +330,47 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
               {settings.protractionOptions.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
           </Field>
-          <Field label="LQ Sweep" info="Liquidity Sweep — price induces a high/low with a wick before entry. Body-close inducements do NOT count as LQ sweeps.">
+          <Field label="LQ Sweep" info="Liquidity Sweep — which level was swept before entry.">
             <select value={t.lqSweep} onChange={e => set({ lqSweep: e.target.value })}>
+              <option value="">--</option>
+              <option value="PDH">PDH</option>
+              <option value="PDL">PDL</option>
+              <option value="PWH">PWH</option>
+              <option value="PWL">PWL</option>
+              <option value="PMH">PMH</option>
+              <option value="PML">PML</option>
+            </select>
+          </Field>
+          <Field label="Asia H/L Sweep" info="Was there a sweep of the Asia session high or low?">
+            <select value={t.asiaHlSweep} onChange={e => set({ asiaHlSweep: e.target.value })}>
               <option value="">--</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
             </select>
           </Field>
-          <Field label="Market Shift" info="After a liquidity sweep, price breaks the last significant low/high with intent. Indicates a shift in market direction.">
-            <select value={t.marketShift} onChange={e => set({ marketShift: e.target.value })}>
+          <Field label="EU M5 Shift" info="Did EU make a market structure shift on the M5 timeframe?">
+            <select value={t.euM5Shift} onChange={e => set({ euM5Shift: e.target.value })}>
+              <option value="">--</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </Field>
+          <Field label="EU M15 Shift" info="Did EU make a market structure shift on the M15 timeframe?">
+            <select value={t.euM15Shift} onChange={e => set({ euM15Shift: e.target.value })}>
+              <option value="">--</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </Field>
+          <Field label="DXY M5 Shift" info="Did DXY make a market structure shift on the M5 timeframe?">
+            <select value={t.dxyM5Shift} onChange={e => set({ dxyM5Shift: e.target.value })}>
+              <option value="">--</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </Field>
+          <Field label="DXY M15 Shift" info="Did DXY make a market structure shift on the M15 timeframe?">
+            <select value={t.dxyM15Shift} onChange={e => set({ dxyM15Shift: e.target.value })}>
               <option value="">--</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -361,8 +393,18 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
           </Field>
         </Section>
 
+        <Section title="DSE">
+          <Field label="Direction" info="What was the reason for your directional bias?">
+            <textarea rows={2} value={t.dseDirection} onChange={e => set({ dseDirection: e.target.value })} className="w-full resize-none" />
+          </Field>
+          <Field label="Stage" info="Either a LQ sweep or a shift inside an HTF PD Array.">
+            <textarea rows={2} value={t.dseStage} onChange={e => set({ dseStage: e.target.value })} className="w-full resize-none" />
+          </Field>
+          <Field label="Entry" computed={getDseEntry(t)} info="Auto-calculated from Entry Specifics: Entry Type + confluences (Imbalance, OB, SZ, OTE)." />
+        </Section>
+
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-accent border-b border-border pb-1">Trade Notes / Emotions / Key Notes</h3>
+          <h3 className="text-sm font-semibold text-accent border-b border-border pb-1">Trade Notes / Emotions / News Event</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <Field label="Trade Notes">
               <textarea rows={2} value={t.tradeNotes} onChange={e => set({ tradeNotes: e.target.value })} className="w-full resize-none" />
@@ -370,8 +412,8 @@ export default function TradeForm({ trade, settings, onChange, onClose, onDelete
             <Field label="Emotions">
               <textarea rows={2} value={t.emotions} onChange={e => set({ emotions: e.target.value })} className="w-full resize-none" />
             </Field>
-            <Field label="Key Notes">
-              <textarea rows={2} value={t.keyNotes} onChange={e => set({ keyNotes: e.target.value })} className="w-full resize-none" />
+            <Field label="News Event">
+              <textarea rows={2} value={t.newsEvent} onChange={e => set({ newsEvent: e.target.value })} className="w-full resize-none" />
             </Field>
           </div>
         </div>

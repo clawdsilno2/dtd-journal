@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, RotateCcw } from 'lucide-react';
 import type { Trade, Settings } from '../types';
-import { createEmptyTrade, getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession } from '../types';
+import { createEmptyTrade, getWeekday, getNetResult, getNetRR, getPlannedRR, getMfpPercent, getMapPercent, getDuration, getSession, getDseEntry } from '../types';
 import TradeForm from '../components/TradeForm';
 
 interface Props {
@@ -112,7 +112,8 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
               <SectionHeader label="Expiry Range" colSpan={3} />
               <SectionHeader label="Exit Specifics" colSpan={7} />
               <SectionHeader label="Market Sentiment" colSpan={4} />
-              <SectionHeader label="Narrative" colSpan={6} />
+              <SectionHeader label="Narrative" colSpan={9} />
+              <SectionHeader label="DSE" colSpan={3} />
               <SectionHeader label="Notes" colSpan={3} />
               <SectionHeader label="Screenshots" colSpan={6} />
             </tr>
@@ -179,14 +180,22 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
               {/* Narrative */}
               <TH>Protraction</TH>
               <TH>LQ Sweep</TH>
-              <TH>Market Shift</TH>
+              <TH>Asia H/L</TH>
+              <TH>EU M5</TH>
+              <TH>EU M15</TH>
+              <TH>DXY M5</TH>
+              <TH>DXY M15</TH>
               <TH>Divergence</TH>
               <TH>Div (+/-)</TH>
               <TH>High/Low</TH>
+              {/* DSE */}
+              <TH>Direction</TH>
+              <TH>Stage</TH>
+              <TH>Entry</TH>
               {/* Notes */}
               <TH>Trade Notes</TH>
               <TH>Emotions</TH>
-              <TH>Key Notes</TH>
+              <TH>News Event</TH>
               {/* Screenshots */}
               <TH>Flow</TH>
               <TH>Flux</TH>
@@ -293,14 +302,22 @@ export default function Trades({ trades, settings, addTrade, updateTrade, delete
                     {/* Narrative */}
                     <TD>{t.protraction}</TD>
                     <TD>{t.lqSweep}</TD>
-                    <TD>{t.marketShift}</TD>
+                    <TD>{t.asiaHlSweep}</TD>
+                    <TD>{t.euM5Shift}</TD>
+                    <TD>{t.euM15Shift}</TD>
+                    <TD>{t.dxyM5Shift}</TD>
+                    <TD>{t.dxyM15Shift}</TD>
                     <TD>{t.divergence}</TD>
                     <TD>{t.divergencePosNeg}</TD>
                     <TD>{t.highLow}</TD>
+                    {/* DSE */}
+                    <TD className="max-w-[120px] truncate">{t.dseDirection}</TD>
+                    <TD className="max-w-[120px] truncate">{t.dseStage}</TD>
+                    <AutoTD>{getDseEntry(t)}</AutoTD>
                     {/* Notes */}
                     <TD className="max-w-[150px] truncate">{t.tradeNotes}</TD>
                     <TD className="max-w-[100px] truncate">{t.emotions}</TD>
-                    <TD className="max-w-[100px] truncate">{t.keyNotes}</TD>
+                    <TD className="max-w-[100px] truncate">{t.newsEvent}</TD>
                     {/* Screenshots */}
                     <TD>{t.tradeLinkFlow ? <a href={t.tradeLinkFlow} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>
                     <TD>{t.tradeLinkFlux ? <a href={t.tradeLinkFlux} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link</a> : ''}</TD>

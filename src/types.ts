@@ -55,14 +55,21 @@ export interface Trade {
   // Narrative
   protraction: string;
   lqSweep: string;
-  marketShift: string;
+  asiaHlSweep: string;
+  euM5Shift: string;
+  euM15Shift: string;
+  dxyM5Shift: string;
+  dxyM15Shift: string;
   divergence: string;
   divergencePosNeg: string;
   highLow: string;
+  // DSE
+  dseDirection: string;
+  dseStage: string;
   // Other
   tradeNotes: string;
   emotions: string;
-  keyNotes: string;
+  newsEvent: string;
   tradeLinkFlow: string;
   tradeLinkFlux: string;
   tradeLinkETF: string;
@@ -167,13 +174,19 @@ export function createEmptyTrade(tradeNumber: number): Trade {
     h1Bias: '',
     protraction: '',
     lqSweep: '',
-    marketShift: '',
+    asiaHlSweep: '',
+    euM5Shift: '',
+    euM15Shift: '',
+    dxyM5Shift: '',
+    dxyM15Shift: '',
     divergence: '',
     divergencePosNeg: '',
     highLow: '',
+    dseDirection: '',
+    dseStage: '',
     tradeNotes: '',
     emotions: '',
-    keyNotes: '',
+    newsEvent: '',
     tradeLinkFlow: '',
     tradeLinkFlux: '',
     tradeLinkETF: '',
@@ -212,6 +225,18 @@ export function getMfpPercent(t: Trade): number {
 export function getMapPercent(t: Trade): number {
   if (!t.slPips || t.slPips === 0) return 0;
   return (t.mapPips / t.slPips) * 100;
+}
+
+export function getDseEntry(t: Trade): string {
+  if (!t.entryType) return '';
+  const parts = [t.entryType];
+  const confluences: string[] = [];
+  if (t.imbalance) confluences.push('Imbalance');
+  if (t.orderBlock) confluences.push('OB');
+  if (t.supplyZone) confluences.push('SZ');
+  if (t.ote) confluences.push('OTE');
+  if (confluences.length > 0) parts.push(confluences.join(' + '));
+  return parts.join(' > ');
 }
 
 export function getDuration(entryTime: string, exitTime: string): string {
